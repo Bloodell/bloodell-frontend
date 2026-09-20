@@ -1,0 +1,45 @@
+name: CI frontend
+
+on:
+  push:
+    branches: [main, 'feat/**', 'fix/**']
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualidade:
+    name: Lint, tipos e build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar o Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # 'npm ci' usa o package-lock.json e falha se ele estiver desatualizado.
+      # E isso que garante que CI e maquina local instalam exatamente as mesmas versoes.
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Conferir os tipos
+        run: npm run typecheck
+
+      - name: Build de producao
+        run: npm run build
+
+      - name: Guardar o resultado do build
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error

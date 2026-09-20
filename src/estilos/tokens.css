@@ -1,0 +1,51 @@
+/*
+  Identidade visual do BLOODELL.
+
+  Verde = vida, disponibilidade, ação positiva.
+  Vermelho = sangue, urgência, alerta.
+
+  Regra de acessibilidade do projeto: nenhuma informação é comunicada só por
+  cor. Todo estado tem rótulo em texto junto do indicador colorido -- quem não
+  distingue verde de vermelho continua entendendo a tela.
+*/
+:root {
+  /* marca */
+  --verde-principal: #0f5132;
+  --verde-secundario: #22c55e;
+  --vermelho-destaque: #dc2626;
+
+  /* superfícies */
+  --fundo: #f8faf9;
+  --superficie: #ffffff;
+  --superficie-alternada: #f1f5f3;
+  --borda: #dfe7e3;
+
+  /* texto */
+  --texto: #1f2937;
+  --texto-suave: #55606f;
+  --texto-invertido: #ffffff;
+
+  /* estados */
+  --sucesso-fundo: #e7f7ee;
+  --sucesso-texto: #0f5132;
+  --atencao-fundo: #fff4e0;
+  --atencao-texto: #8a5300;
+  --erro-fundo: #fdeaea;
+  --erro-texto: #a31616;
+  --neutro-fundo: #eef2f0;
+  --neutro-texto: #44505f;
+
+  /* medidas */
+  --raio: 10px;
+  --raio-pequeno: 6px;
+  --espaco-1: 4px;
+  --espaco-2: 8px;
+  --espaco-3: 12px;
+  --espaco-4: 16px;
+  --espaco-5: 24px;
+  --espaco-6: 32px;
+  --sombra: 0 1px 2px rgba(15, 81, 50, 0.06), 0 4px 12px rgba(15, 81, 50, 0.05);
+  --largura-lateral: 232px;
+
+  --fonte: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
