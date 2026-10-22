@@ -69,14 +69,30 @@ incluindo os erros de campo quando existem.
 
 ## Telas
 
+### Interface baseada na concept art
+
+A interface usa os tokens de `src/estilos/tokens.css` e os ajustes de
+`src/estilos/refino.css`, com sidebar responsiva, ícones SVG próprios, cards,
+gráficos e tabelas. Os indicadores, as entregas, os alertas e a rastreabilidade
+consultam a API real. A busca do estoque filtra **a página carregada**; o backend
+ainda não oferece busca textual entre todas as páginas.
+
+O backend não disponibiliza login nem uma sessão de usuário. Por isso a interface
+identifica o acesso como **demonstração sem autenticação** em vez de mostrar um
+formulário de login que daria uma falsa sensação de segurança. Também não existe
+uma API de geometria ou localização em tempo real para desenhar o mapa da concept
+art: a tela de entregas mostra rota planejada em texto e o estado real da entrega.
+
 | Rota | O que mostra |
 |---|---|
 | `/` | painel descritivo: estoque por tipo, demanda por hospital, tempos de atendimento |
 | `/estoque` | posição de estoque e bolsas na ordem de chegada |
+| `/entregas` | planeja entregas para requisições alocadas e acompanha suas etapas |
+| `/cadeia-fria` | alertas, histórico de temperatura e cadastro da frota |
 | `/doacoes` | registra doação e mostra as bolsas geradas |
 | `/requisicoes` | cria requisição, mostra a fila e processa a alocação com os passos reais |
 | `/algoritmos` | visualizador da lista, da fila e da pilha, com o conteúdo real dos nós |
-| `/unidades` | hemocentros e hospitais |
+| `/unidades` | consulta e cadastro de hemocentros e hospitais sintéticos |
 
 ## Identidade visual
 

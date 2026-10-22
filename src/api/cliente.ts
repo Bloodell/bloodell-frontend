@@ -39,7 +39,7 @@ async function requisitar<T>(caminho: string, opcoes: RequestInit = {}): Promise
       title: 'Sem conexao com a API',
       status: 0,
       detail:
-        'Nao foi possivel falar com a API do Bloodell. Confira se o backend esta rodando em http://127.0.0.1:8080.',
+        'Não foi possível falar com a API do Bloodell. Confira a conexão e tente novamente.',
     })
   }
 

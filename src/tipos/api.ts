@@ -235,6 +235,65 @@ export interface EventoDeRastreabilidade {
   ocorridoEm: string
 }
 
+export type StatusEntrega = 'PLANEJADA' | 'DESPACHADA' | 'EM_TRANSPORTE' | 'ENTREGUE' | 'CANCELADA'
+
+export interface Entrega {
+  id: number
+  requisicaoId: number
+  requisicaoCodigo: string
+  veiculoId: number
+  veiculoPlaca: string
+  origemId: number
+  origemNome: string
+  status: StatusEntrega
+  rota: string | null
+  distanciaKm: number | null
+  tempoEstimadoMin: number | null
+  iniciadaEm: string | null
+  concluidaEm: string | null
+}
+
+export interface Veiculo {
+  id: number
+  placa: string
+  hemocentroBaseId: number
+  hemocentroBaseNome: string
+  capacidadeBolsas: number
+  status: string
+  latitude: number
+  longitude: number
+}
+
+export interface Alerta {
+  id: number
+  tipo: string
+  nivel: string
+  mensagem: string
+  veiculoId: number | null
+  entregaId: number | null
+  bolsaId: number | null
+  criadoEm: string
+}
+
+export interface LeituraDeTelemetria {
+  id: number
+  veiculoId: number
+  lat: number
+  lon: number
+  temperaturaC: number
+  statusVeiculo: string
+  registradaEm: string
+  recebidaEm: string
+  dentroDaFaixaDidatica: boolean
+}
+
+export interface MetricasDeTelemetria {
+  leiturasRecebidas: number
+  leiturasPersistidas: number
+  leiturasRecusadas: number
+  tamanhoAtualDaFila: number
+}
+
 /** Envelope de erro da API (RFC 7807). Toda falha chega neste formato. */
 export interface ProblemaApi {
   type: string

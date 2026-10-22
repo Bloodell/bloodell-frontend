@@ -1,86 +1,87 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { useState, type FormEvent, type ReactNode } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Icone, Marca, type NomeIcone } from './Icone'
 
-const PAGINAS = [
-  { caminho: '/', rotulo: 'Painel', fim: true },
-  { caminho: '/estoque', rotulo: 'Estoque' },
-  { caminho: '/doacoes', rotulo: 'Registrar doação' },
-  { caminho: '/requisicoes', rotulo: 'Requisições' },
-  { caminho: '/algoritmos', rotulo: 'Estruturas (AED)' },
-  { caminho: '/unidades', rotulo: 'Unidades' },
+const paginas: { caminho: string; rotulo: string; icone: NomeIcone; fim?: boolean }[] = [
+  { caminho: '/', rotulo: 'Visão geral', icone: 'inicio', fim: true },
+  { caminho: '/estoque', rotulo: 'Estoque', icone: 'estoque' },
+  { caminho: '/doacoes', rotulo: 'Doações', icone: 'doacao' },
+  { caminho: '/requisicoes', rotulo: 'Requisições', icone: 'requisicoes' },
+  { caminho: '/entregas', rotulo: 'Entregas', icone: 'entregas' },
+  { caminho: '/cadeia-fria', rotulo: 'Cadeia fria', icone: 'termometro' },
+  { caminho: '/unidades', rotulo: 'Unidades', icone: 'unidades' },
+  { caminho: '/algoritmos', rotulo: 'Estruturas (AED)', icone: 'algoritmos' },
 ]
 
-function Gota() {
-  return (
-    <svg className="lateral__gota" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M12 2.5c3.6 4.3 7 8.2 7 12a7 7 0 1 1-14 0c0-3.8 3.4-7.7 7-12z"
-        fill="#dc2626"
-        stroke="#ffffff"
-        strokeWidth="1.2"
-      />
-    </svg>
-  )
-}
-
 export function Layout() {
+  const [menuAberto, setMenuAberto] = useState(false)
+  const [busca, setBusca] = useState('')
+  const navegar = useNavigate()
+
+  function pesquisar(evento: FormEvent) {
+    evento.preventDefault()
+    navegar(`/estoque${busca.trim() ? `?busca=${encodeURIComponent(busca.trim())}` : ''}`)
+    setMenuAberto(false)
+  }
+
   return (
     <div className="aplicacao">
-      <nav className="lateral" aria-label="Navegação principal">
-        <div>
-          <div className="lateral__marca">
-            <Gota />
-            BLOODELL
-          </div>
-          <div className="lateral__legenda">
-            Gestão, distribuição e monitoramento de hemocomponentes · dados sintéticos
-          </div>
+      {menuAberto && <button className="menu-sombra" aria-label="Fechar menu" onClick={() => setMenuAberto(false)} />}
+      <aside className={`lateral${menuAberto ? ' lateral--aberta' : ''}`}>
+        <div className="lateral__topo">
+          <Marca clara />
+          <button className="botao-icone lateral__fechar" aria-label="Fechar menu" onClick={() => setMenuAberto(false)}><Icone nome="fechar" /></button>
         </div>
-
-        <div className="navegacao">
-          {PAGINAS.map((pagina) => (
-            <NavLink
-              key={pagina.caminho}
-              to={pagina.caminho}
-              end={pagina.fim}
-              className={({ isActive }) =>
-                `navegacao__item${isActive ? ' navegacao__item--ativo' : ''}`
-              }
-            >
-              {pagina.rotulo}
+        <p className="lateral__grupo">OPERAÇÃO</p>
+        <nav className="navegacao" aria-label="Navegação principal">
+          {paginas.map((pagina) => (
+            <NavLink key={pagina.caminho} to={pagina.caminho} end={pagina.fim}
+              onClick={() => setMenuAberto(false)}
+              className={({ isActive }) => `navegacao__item${isActive ? ' navegacao__item--ativo' : ''}`}>
+              <Icone nome={pagina.icone} />
+              <span>{pagina.rotulo}</span>
             </NavLink>
           ))}
+        </nav>
+        <div className="lateral__rodape">
+          <span className="lateral__sinal" />
+          <div><strong>Ambiente acadêmico</strong><small>Dados sintéticos · CESAR School</small></div>
         </div>
-
-        <div className="lateral__legenda" style={{ marginTop: 'auto' }}>
-          CESAR School · ADS 3º semestre · Projeto integrador
-          <br />
-          Unidade 1 — sem FEFO, sem matriz ABO/Rh e sem rota
-        </div>
-      </nav>
+      </aside>
 
       <div className="conteudo">
-        <Outlet />
+        <div className="barra-superior">
+          <button className="botao-icone menu-botao" aria-label="Abrir menu" onClick={() => setMenuAberto(true)}><Icone nome="menu" /></button>
+          <span className="barra-superior__contexto">Gestão de hemocomponentes <span>/</span> Rede Bloodell</span>
+          <form className="busca-global" role="search" onSubmit={pesquisar}>
+            <Icone nome="busca" />
+            <input aria-label="Buscar bolsa no estoque" placeholder="Buscar bolsa no estoque" value={busca} onChange={(evento) => setBusca(evento.target.value)} />
+          </form>
+          <div className="perfil-demo" aria-label="Acesso de demonstração">
+            <span className="perfil-demo__avatar">BD</span>
+            <span><strong>Demonstração</strong><small>Sem autenticação</small></span>
+          </div>
+        </div>
+        <main id="conteudo-principal"><Outlet /></main>
       </div>
     </div>
   )
 }
 
-export function Cabecalho({
-  titulo,
-  descricao,
-  acoes,
-}: {
+export function Cabecalho({ titulo, descricao, acoes, secao }: {
   titulo: string
   descricao: string
-  acoes?: React.ReactNode
+  acoes?: ReactNode
+  secao?: string
 }) {
   return (
     <header className="cabecalho">
       <div>
+        <div className="cabecalho__secao">{secao ?? 'BLOODELL / OPERAÇÃO'}</div>
         <h1>{titulo}</h1>
-        <div className="cabecalho__descricao">{descricao}</div>
+        <p className="cabecalho__descricao">{descricao}</p>
       </div>
-      {acoes}
+      {acoes && <div className="cabecalho__acoes">{acoes}</div>}
     </header>
   )
 }

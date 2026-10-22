@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import { useRecurso } from '../api/useRecurso'
 import { AvisoAcademico } from '../componentes/AvisoAcademico'
@@ -7,7 +8,7 @@ import { Estado } from '../componentes/Estado'
 import { Etiqueta } from '../componentes/Etiqueta'
 import { tomDoEstadoDaBolsa } from '../componentes/tons'
 import { Cabecalho } from '../componentes/Layout'
-import type { Bolsa, ItemDeEstoque, Pagina, TipoComponente, Unidade } from '../tipos/api'
+import type { Bolsa, EventoDeRastreabilidade, ItemDeEstoque, Pagina, TipoComponente, Unidade } from '../tipos/api'
 
 const COMPONENTES: { valor: TipoComponente | ''; rotulo: string }[] = [
   { valor: '', rotulo: 'Todos os componentes' },
@@ -21,6 +22,10 @@ export function PaginaDeEstoque() {
   const [componente, setComponente] = useState<TipoComponente | ''>('')
   const [unidadeId, setUnidadeId] = useState('')
   const [somenteDisponiveis, setSomenteDisponiveis] = useState(true)
+  const [pagina, setPagina] = useState(0)
+  const [bolsaSelecionada, setBolsaSelecionada] = useState<Bolsa | null>(null)
+  const [parametros, definirParametros] = useSearchParams()
+  const busca = parametros.get('busca') ?? ''
 
   const unidades = useRecurso<Unidade[]>('/hemocentros')
 
@@ -29,11 +34,15 @@ export function PaginaDeEstoque() {
   if (unidadeId) filtros.set('unidadeId', unidadeId)
   const itens = useRecurso<ItemDeEstoque[]>(`/estoques?${filtros.toString()}`)
 
-  const filtrosDeBolsa = new URLSearchParams({ size: '50' })
+  const filtrosDeBolsa = new URLSearchParams({ size: '20', page: String(pagina) })
   if (componente) filtrosDeBolsa.set('componente', componente)
   if (unidadeId) filtrosDeBolsa.set('unidadeId', unidadeId)
   if (somenteDisponiveis) filtrosDeBolsa.set('status', 'DISPONIVEL')
   const bolsas = useRecurso<Pagina<Bolsa>>(`/bolsas?${filtrosDeBolsa.toString()}`)
+  const rastreabilidade = useRecurso<EventoDeRastreabilidade[]>(bolsaSelecionada ? `/bolsas/${bolsaSelecionada.id}/rastreabilidade` : null)
+  const bolsasVisiveis = (bolsas.dados?.content ?? []).filter((bolsa) =>
+    `${bolsa.codigo} ${bolsa.tipoSanguineo} ${bolsa.unidadeAtualNome} ${bolsa.componente}`.toLocaleLowerCase('pt-BR').includes(busca.toLocaleLowerCase('pt-BR')),
+  )
 
   return (
     <>
@@ -46,10 +55,19 @@ export function PaginaDeEstoque() {
         <AvisoAcademico />
 
         <Cartao titulo="Filtros">
-          <div className="formulario">
+          <div className="filtros-linha">
+            <label className="campo campo--busca">
+              <span className="campo__rotulo">Buscar nesta página</span>
+              <input type="search" value={busca} placeholder="Código, tipo ou unidade" onChange={(evento) => {
+                const proxima = new URLSearchParams(parametros)
+                if (evento.target.value) proxima.set('busca', evento.target.value)
+                else proxima.delete('busca')
+                definirParametros(proxima)
+              }} />
+            </label>
             <label className="campo">
               <span className="campo__rotulo">Hemocentro</span>
-              <select value={unidadeId} onChange={(evento) => setUnidadeId(evento.target.value)}>
+              <select value={unidadeId} onChange={(evento) => { setUnidadeId(evento.target.value); setPagina(0) }}>
                 <option value="">Todos</option>
                 {(unidades.dados ?? []).map((unidade) => (
                   <option key={unidade.id} value={unidade.id}>
@@ -63,7 +81,7 @@ export function PaginaDeEstoque() {
               <span className="campo__rotulo">Componente</span>
               <select
                 value={componente}
-                onChange={(evento) => setComponente(evento.target.value as TipoComponente | '')}
+                onChange={(evento) => { setComponente(evento.target.value as TipoComponente | ''); setPagina(0) }}
               >
                 {COMPONENTES.map((opcao) => (
                   <option key={opcao.valor} value={opcao.valor}>
@@ -77,7 +95,7 @@ export function PaginaDeEstoque() {
               <span className="campo__rotulo">Situação das bolsas</span>
               <select
                 value={somenteDisponiveis ? 'disponiveis' : 'todas'}
-                onChange={(evento) => setSomenteDisponiveis(evento.target.value === 'disponiveis')}
+                onChange={(evento) => { setSomenteDisponiveis(evento.target.value === 'disponiveis'); setPagina(0) }}
               >
                 <option value="disponiveis">Somente disponíveis</option>
                 <option value="todas">Todas</option>
@@ -129,7 +147,7 @@ export function PaginaDeEstoque() {
           <Estado
             carregando={bolsas.carregando}
             erro={bolsas.erro}
-            vazio={(bolsas.dados?.content ?? []).length === 0}
+            vazio={!busca && bolsasVisiveis.length === 0}
             mensagemVazio="Nenhuma bolsa encontrada com esses filtros."
             aoTentarNovamente={bolsas.recarregar}
           >
@@ -144,10 +162,11 @@ export function PaginaDeEstoque() {
                     <th>Validade</th>
                     <th>Situação</th>
                     <th>Unidade</th>
+                    <th>Histórico</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {(bolsas.dados?.content ?? []).map((bolsa) => (
+                  {bolsasVisiveis.map((bolsa) => (
                     <tr key={bolsa.id}>
                       <td>#{bolsa.sequenciaEntrada}</td>
                       <td><code>{bolsa.codigo}</code></td>
@@ -165,20 +184,37 @@ export function PaginaDeEstoque() {
                         <Etiqueta texto={bolsa.status} tom={tomDoEstadoDaBolsa(bolsa.status)} />
                       </td>
                       <td>{bolsa.unidadeAtualNome}</td>
+                      <td><button className="botao botao--secundario" type="button" onClick={() => setBolsaSelecionada(bolsa)}>Ver</button></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+            {busca && bolsasVisiveis.length === 0 && <p className="texto-vazio">Nenhuma bolsa nesta página corresponde à busca. Tente outra página ou ajuste os filtros.</p>}
 
-            <div className="rodape-tabela">
-              Mostrando {bolsas.dados?.content.length ?? 0} de{' '}
-              {bolsas.dados?.totalElements ?? 0} bolsa(s). A coluna “chegada” é a ordem de
-              entrada no estoque — <strong>não</strong> é ordem de validade: priorizar por
-              validade é FEFO, conteúdo da Unidade 2.
+            <div className="paginacao">
+              <span>Página {(bolsas.dados?.number ?? 0) + 1} de {bolsas.dados?.totalPages ?? 1} · {bolsas.dados?.totalElements ?? 0} bolsa(s) no total</span>
+              <div className="paginacao__botoes">
+                <button className="botao botao--secundario" type="button" disabled={pagina === 0} onClick={() => setPagina(pagina - 1)}>Anterior</button>
+                <button className="botao botao--secundario" type="button" disabled={pagina + 1 >= (bolsas.dados?.totalPages ?? 1)} onClick={() => setPagina(pagina + 1)}>Próxima</button>
+              </div>
             </div>
+            <div className="rodape-tabela">A busca filtra apenas as bolsas desta página. A ordem de chegada não representa prioridade por validade.</div>
           </Estado>
         </Cartao>
+
+        {bolsaSelecionada && <Cartao titulo={`Rastreabilidade · ${bolsaSelecionada.codigo}`}
+          acoes={<button type="button" className="botao botao--secundario" onClick={() => setBolsaSelecionada(null)}>Fechar</button>}>
+          <Estado carregando={rastreabilidade.carregando} erro={rastreabilidade.erro}
+            vazio={(rastreabilidade.dados ?? []).length === 0} mensagemVazio="Nenhum evento registrado para esta bolsa."
+            aoTentarNovamente={rastreabilidade.recarregar}>
+            <div className="tabela__rolagem"><table className="tabela"><thead><tr><th>Quando</th><th>De</th><th>Para</th><th>Descrição</th></tr></thead><tbody>
+              {(rastreabilidade.dados ?? []).map((evento) => <tr key={evento.id}>
+                <td>{new Date(evento.ocorridoEm).toLocaleString('pt-BR')}</td><td>{evento.statusAnterior ?? '—'}</td><td>{evento.statusNovo}</td><td>{evento.descricao ?? '—'}</td>
+              </tr>)}
+            </tbody></table></div>
+          </Estado>
+        </Cartao>}
       </div>
     </>
   )
