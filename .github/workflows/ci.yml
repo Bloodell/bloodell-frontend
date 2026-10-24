@@ -34,12 +34,13 @@ jobs:
       - name: Conferir os tipos
         run: npm run typecheck
 
+      # Exportacao estatica do Next: gera a pasta out/, que o Nginx serve.
       - name: Build de producao
         run: npm run build
 
       - name: Guardar o resultado do build
         uses: actions/upload-artifact@v4
         with:
-          name: dist
-          path: dist/
+          name: out
+          path: out/
           if-no-files-found: error
