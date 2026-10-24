@@ -1,9 +1,14 @@
 node_modules/
+.next/
+out/
+next-env.d.ts
+# Gerado automaticamente pelo "next dev".
+AGENTS.md
+*.tsbuildinfo
 dist/
 .env
 .env.local
 *.local
-.vite/
 .idea/
 .vscode/
 .DS_Store
