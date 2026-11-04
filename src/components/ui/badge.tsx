@@ -1,36 +1,46 @@
 import { cva, type VariantProps } from 'class-variance-authority'
+import { Circle, CircleArrowRight, CircleCheck, Clock, OctagonAlert, Snowflake, type LucideIcon } from 'lucide-react'
 import type { ComponentProps } from 'react'
 import type { Tom } from '@/lib/formatos'
 import { cn } from '@/lib/utils'
 
+/**
+ * Cada tom e um PAPEL operacional (ver globals.css), nao uma cor solta:
+ *   sucesso  estavel      disponivel, dentro da faixa, atendida
+ *   atencao  ambar        vence em breve, fila urgente
+ *   erro     grena        emergencia, vencida, fora da faixa
+ *   frio     azul-gelo    transporte refrigerado, telemetria
+ *   info     tinta        em andamento (reservada, alocada)
+ *   neutro   cinza        sem estado especial
+ */
 const badgeVariants = cva(
-  'inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap',
+  'inline-flex w-fit shrink-0 items-center gap-1.5 rounded-md border px-2 py-0.5 text-apoio font-medium whitespace-nowrap',
   {
     variants: {
       tom: {
-        neutro: 'border-border bg-muted/60 text-muted-foreground',
-        sucesso: 'border-emerald-600/15 bg-emerald-500/8 text-emerald-700 dark:text-emerald-400',
-        atencao: 'border-amber-600/20 bg-amber-500/10 text-amber-700 dark:text-amber-400',
-        erro: 'border-red-600/15 bg-red-500/8 text-red-700 dark:text-red-400',
-        info: 'border-sky-600/15 bg-sky-500/8 text-sky-700 dark:text-sky-400',
+        neutro: 'border-border bg-muted text-muted-foreground',
+        sucesso: 'border-estavel/25 bg-estavel-suave text-estavel',
+        atencao: 'border-atencao/30 bg-atencao-suave text-atencao',
+        erro: 'border-critico/30 bg-critico-suave text-critico',
+        frio: 'border-frio/25 bg-frio-suave text-frio',
+        info: 'border-secondary-foreground/20 bg-secondary text-secondary-foreground',
       },
     },
     defaultVariants: { tom: 'neutro' },
   },
 )
 
-const corDoPonto: Record<Tom, string> = {
-  neutro: 'bg-muted-foreground/60',
-  sucesso: 'bg-emerald-500',
-  atencao: 'bg-amber-500',
-  erro: 'bg-red-500',
-  info: 'bg-sky-500',
+/** O icone e o segundo canal (alem do texto): o estado nao depende da cor. */
+const iconeDoTom: Record<Tom, LucideIcon> = {
+  neutro: Circle,
+  sucesso: CircleCheck,
+  atencao: Clock,
+  erro: OctagonAlert,
+  frio: Snowflake,
+  info: CircleArrowRight,
 }
 
-/**
- * Etiqueta de status. O ponto colorido nunca vem sozinho: o texto ao lado diz
- * o estado, entao a informacao nao depende so de cor.
- */
+/** Etiqueta de status: icone do papel + texto. `ponto={false}` tira o icone. */
 export function Badge({
   className,
   tom,
@@ -38,9 +48,10 @@ export function Badge({
   children,
   ...props
 }: ComponentProps<'span'> & VariantProps<typeof badgeVariants> & { ponto?: boolean }) {
+  const Icone = iconeDoTom[tom ?? 'neutro']
   return (
     <span data-slot="badge" className={cn(badgeVariants({ tom }), className)} {...props}>
-      {ponto && <span className={cn('size-1.5 rounded-full', corDoPonto[tom ?? 'neutro'])} aria-hidden="true" />}
+      {ponto && <Icone className={cn('size-3 shrink-0', (tom ?? 'neutro') === 'neutro' && 'size-2 fill-current')} aria-hidden="true" />}
       {children}
     </span>
   )

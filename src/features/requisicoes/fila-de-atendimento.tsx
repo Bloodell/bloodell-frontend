@@ -48,7 +48,7 @@ export function FilaDeAtendimento({ fila }: { fila: EstadoDoRecurso<ItemDaFila[]
         <li key={item.codigo} className={cn('flex items-center gap-3 px-6 py-3 animate-entrar', indice === 0 && 'bg-muted/40')}>
           <span
             className={cn(
-              'flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold tabular-nums',
+              'flex size-7 shrink-0 items-center justify-center rounded-full border text-apoio font-semibold tabular-nums',
               indice === 0 && 'border-primary bg-primary text-primary-foreground',
             )}
           >
@@ -56,10 +56,10 @@ export function FilaDeAtendimento({ fila }: { fila: EstadoDoRecurso<ItemDaFila[]
           </span>
           <div className="min-w-0 flex-1">
             <p className="flex items-center gap-2 text-sm">
-              <span className="truncate font-mono text-[13px]">{item.codigo}</span>
-              {indice === 0 && <span className="text-[11px] font-medium text-muted-foreground">próxima</span>}
+              <span className="truncate font-mono text-rotulo">{item.codigo}</span>
+              {indice === 0 && <span className="text-apoio font-medium text-muted-foreground">próxima</span>}
             </p>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="truncate text-apoio text-muted-foreground">
               {item.hospital} · chegada #{item.sequenciaChegada}
             </p>
           </div>

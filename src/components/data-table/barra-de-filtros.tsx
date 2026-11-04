@@ -25,7 +25,7 @@ export function BarraDeFiltros({
         <Button variant="ghost" size="sm" onClick={aoLimpar} className="sm:ml-auto">
           <X />
           Limpar filtros
-          <span className="rounded bg-muted px-1.5 text-[11px] font-medium tabular-nums">{ativos}</span>
+          <span className="rounded bg-muted px-1.5 text-apoio font-medium tabular-nums">{ativos}</span>
         </Button>
       )}
     </div>
@@ -55,7 +55,7 @@ export function CampoDeBusca({
         onChange={(evento) => aoMudar(evento.target.value)}
         placeholder={placeholder}
         aria-label={rotulo}
-        className="h-8 pl-9 text-[13px]"
+        className="h-8 pl-9 text-rotulo"
       />
     </div>
   )

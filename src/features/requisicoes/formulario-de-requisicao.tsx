@@ -35,9 +35,9 @@ const INICIAL: Valores = {
 }
 
 const COR_DA_PRIORIDADE: Record<Prioridade, string> = {
-  EMERGENCIA: 'bg-red-500',
-  URGENTE: 'bg-amber-500',
-  ELETIVA: 'bg-muted-foreground/50',
+  EMERGENCIA: 'bg-critico',
+  URGENTE: 'bg-atencao',
+  ELETIVA: 'bg-muted-foreground',
 }
 
 function validar(valores: Valores): Partial<Record<keyof Valores, string>> {

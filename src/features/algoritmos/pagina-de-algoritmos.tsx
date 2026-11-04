@@ -56,7 +56,7 @@ function CartaoDeEstrutura<T extends { tamanho: number; capturadoEm: string; obs
         ) : (
           children(dados)
         )}
-        {dados?.observacao && <p className="text-xs leading-relaxed text-muted-foreground">{dados.observacao}</p>}
+        {dados?.observacao && <p className="text-apoio leading-relaxed text-muted-foreground">{dados.observacao}</p>}
       </CardContent>
     </Card>
   )
@@ -111,8 +111,8 @@ export function PaginaDeAlgoritmos() {
                 <p className="text-sm font-medium">Implementado · Unidade {situacao.dados.etapaVigente}</p>
                 <ul className="mt-3 space-y-2">
                   {situacao.dados.implementados.map((item) => (
-                    <li key={item} className="flex gap-2 text-[13px]">
-                      <CircleCheck className="mt-0.5 size-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
+                    <li key={item} className="flex gap-2 text-rotulo">
+                      <CircleCheck className="mt-0.5 size-3.5 shrink-0 text-estavel" aria-hidden="true" />
                       {item}
                     </li>
                   ))}
@@ -122,14 +122,14 @@ export function PaginaDeAlgoritmos() {
                 <p className="text-sm font-medium">Ainda não implementado · Unidade 2</p>
                 <ul className="mt-3 space-y-2">
                   {situacao.dados.pendentesDaUnidadeDois.map((item) => (
-                    <li key={item} className="flex gap-2 text-[13px] text-muted-foreground">
+                    <li key={item} className="flex gap-2 text-rotulo text-muted-foreground">
                       <CircleDashed className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
                       {item}
                     </li>
                   ))}
                 </ul>
               </div>
-              <p className="border-t pt-4 text-xs text-muted-foreground md:col-span-2">{situacao.dados.observacao}</p>
+              <p className="border-t pt-4 text-apoio text-muted-foreground md:col-span-2">{situacao.dados.observacao}</p>
             </>
           )}
         </CardContent>
@@ -158,7 +158,7 @@ export function PaginaDeAlgoritmos() {
               ))}
             </Encadeamento>
             {dados.nos.length > 24 && (
-              <p className="text-xs text-muted-foreground">Mostrando os 24 primeiros nós de {dados.tamanho}.</p>
+              <p className="text-apoio text-muted-foreground">Mostrando os 24 primeiros nós de {dados.tamanho}.</p>
             )}
           </>
         )}
@@ -200,16 +200,16 @@ export function PaginaDeAlgoritmos() {
                 className="flex items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2 shadow-xs first:border-primary/40"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-mono text-xs font-medium">
-                    {no.posicaoDoTopo === 1 && <span className="mr-1.5 font-sans text-[11px] text-muted-foreground">topo</span>}
+                  <p className="truncate font-mono text-apoio font-medium">
+                    {no.posicaoDoTopo === 1 && <span className="mr-1.5 font-sans text-apoio text-muted-foreground">topo</span>}
                     {no.codigoBolsa}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-apoio text-muted-foreground">
                     {no.statusAnterior ? `${rotulo(no.statusAnterior)} → ` : ''}
                     {rotulo(no.statusNovo)}
                   </p>
                 </div>
-                <span className="text-xs text-muted-foreground tabular-nums">{hora(no.ocorridoEm)}</span>
+                <span className="text-apoio text-muted-foreground tabular-nums">{hora(no.ocorridoEm)}</span>
               </li>
             ))}
           </ol>

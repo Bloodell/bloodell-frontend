@@ -73,7 +73,7 @@ export function PaginaDeEntregas() {
     {
       id: 'requisicao',
       cabecalho: 'Requisição',
-      celula: (entrega) => <span className="font-mono text-[13px]">{entrega.requisicaoCodigo}</span>,
+      celula: (entrega) => <span className="font-mono text-rotulo">{entrega.requisicaoCodigo}</span>,
       esqueleto: 'w-28',
     },
     {
@@ -86,7 +86,7 @@ export function PaginaDeEntregas() {
     {
       id: 'veiculo',
       cabecalho: 'Veículo',
-      celula: (entrega) => <span className="font-mono text-[13px]">{entrega.veiculoPlaca}</span>,
+      celula: (entrega) => <span className="font-mono text-rotulo">{entrega.veiculoPlaca}</span>,
       esqueleto: 'w-20',
     },
     {

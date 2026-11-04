@@ -10,7 +10,7 @@ export function AvisoAcademico({ complemento, className }: { complemento?: strin
   return (
     <p
       className={cn(
-        'flex items-start gap-2.5 rounded-lg border border-dashed px-3.5 py-2.5 text-xs leading-relaxed text-muted-foreground',
+        'flex items-start gap-2.5 rounded-lg border border-dashed px-3.5 py-2.5 text-apoio leading-relaxed text-muted-foreground',
         className,
       )}
     >

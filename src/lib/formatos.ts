@@ -5,7 +5,7 @@
  */
 import type { Prioridade, TipoComponente } from './api/tipos'
 
-export type Tom = 'neutro' | 'sucesso' | 'atencao' | 'erro' | 'info'
+export type Tom = 'neutro' | 'sucesso' | 'atencao' | 'erro' | 'frio' | 'info'
 
 export const TIPOS_SANGUINEOS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const
 
@@ -66,9 +66,10 @@ export function tomDoEstadoDaBolsa(status: string): Tom {
       return 'sucesso'
     case 'RESERVADA':
     case 'ALOCADA':
+      return 'info'
     case 'DESPACHADA':
     case 'EM_TRANSPORTE':
-      return 'info'
+      return 'frio'
     case 'VENCIDA':
     case 'DESCARTADA':
       return 'erro'
@@ -112,7 +113,7 @@ export function tomDaEntrega(status: string): Tom {
       return 'sucesso'
     case 'DESPACHADA':
     case 'EM_TRANSPORTE':
-      return 'info'
+      return 'frio'
     case 'CANCELADA':
       return 'erro'
     default:

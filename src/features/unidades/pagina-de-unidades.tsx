@@ -36,7 +36,7 @@ const colunas: Coluna<Unidade>[] = [
     id: 'coordenada',
     cabecalho: 'Coordenada',
     celula: (unidade) => (
-      <span className="inline-flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+      <span className="inline-flex items-center gap-1.5 font-mono text-apoio text-muted-foreground">
         <MapPin className="size-3.5" aria-hidden="true" />
         {unidade.latitude.toFixed(4)}, {unidade.longitude.toFixed(4)}
       </span>

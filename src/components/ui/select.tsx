@@ -20,7 +20,7 @@ export function Select({
         className={cn(
           estiloDeCampo,
           'cursor-pointer appearance-none pr-9 [&>option]:bg-popover',
-          compacto && 'h-8 text-[13px]',
+          compacto && 'h-8 text-rotulo',
         )}
         {...props}
       >

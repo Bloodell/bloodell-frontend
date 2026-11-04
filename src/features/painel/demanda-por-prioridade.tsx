@@ -3,9 +3,9 @@ import { PRIORIDADES, numero } from '@/lib/formatos'
 import { cn } from '@/lib/utils'
 
 const COR: Record<string, string> = {
-  EMERGENCIA: 'bg-red-500',
-  URGENTE: 'bg-amber-500',
-  ELETIVA: 'bg-success',
+  EMERGENCIA: 'bg-critico',
+  URGENTE: 'bg-atencao',
+  ELETIVA: 'bg-muted-foreground',
 }
 
 /** Barras horizontais: mais facil de comparar que uma pizza. */
@@ -27,7 +27,7 @@ export function DemandaPorPrioridade({ dados }: { dados: ContagemPorCategoria[] 
               </span>
               <span className="tabular-nums">
                 <span className="font-medium">{numero(quantidade)}</span>
-                <span className="ml-1.5 text-xs text-muted-foreground">{parte.toFixed(0)}%</span>
+                <span className="ml-1.5 text-apoio text-muted-foreground">{parte.toFixed(0)}%</span>
               </span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-muted">

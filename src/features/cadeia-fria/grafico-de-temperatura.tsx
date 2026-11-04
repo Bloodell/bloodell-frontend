@@ -13,10 +13,10 @@ function Dica({ active, payload }: { active?: boolean; payload?: { payload: Pont
   if (!active || !payload?.length) return null
   const ponto = payload[0].payload
   return (
-    <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-lg">
+    <div className="rounded-lg border bg-popover px-3 py-2 text-apoio shadow-lg">
       <p className="text-muted-foreground">{ponto.horario}</p>
       <p className="mt-0.5 font-medium tabular-nums">{ponto.temperatura.toFixed(1)} °C</p>
-      {!ponto.dentroDaFaixa && <p className="mt-0.5 font-medium text-destructive">Fora da faixa didática</p>}
+      {!ponto.dentroDaFaixa && <p className="mt-0.5 font-medium text-critico">Fora da faixa didática</p>}
     </div>
   )
 }
@@ -45,25 +45,25 @@ export function GraficoDeTemperatura({ leituras }: { leituras: LeituraDeTelemetr
           axisLine={false}
           tickMargin={8}
           minTickGap={24}
-          tick={{ className: 'fill-muted-foreground text-[11px]' }}
+          tick={{ className: 'fill-muted-foreground text-apoio' }}
         />
         <YAxis
           unit="°"
           tickLine={false}
           axisLine={false}
           width={44}
-          tick={{ className: 'fill-muted-foreground text-[11px]' }}
+          tick={{ className: 'fill-muted-foreground text-apoio' }}
         />
         <Tooltip content={<Dica />} cursor={{ className: 'stroke-border' }} />
         <Area
           dataKey="temperatura"
           type="monotone"
-          className="text-primary"
+          className="text-frio"
           stroke="currentColor"
           strokeWidth={1.75}
           fill="url(#preenchimento-temperatura)"
           dot={false}
-          activeDot={{ r: 3.5, className: 'fill-primary stroke-background' }}
+          activeDot={{ r: 3.5, className: 'fill-frio stroke-background' }}
         />
       </AreaChart>
     </ResponsiveContainer>

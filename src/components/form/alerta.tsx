@@ -4,14 +4,14 @@ import { cn } from '@/lib/utils'
 
 const estilos = {
   sucesso: {
-    caixa: 'border-emerald-600/20 bg-emerald-500/6 text-emerald-900 dark:text-emerald-200',
+    caixa: 'border-estavel/30 bg-estavel-suave text-foreground',
     icone: CheckCircle2,
-    corDoIcone: 'text-emerald-600 dark:text-emerald-400',
+    corDoIcone: 'text-estavel',
   },
   erro: {
-    caixa: 'border-destructive/25 bg-destructive/5 text-foreground',
+    caixa: 'border-critico/30 bg-critico-suave text-foreground',
     icone: AlertCircle,
-    corDoIcone: 'text-destructive',
+    corDoIcone: 'text-critico',
   },
   info: {
     caixa: 'border-border bg-muted/40 text-foreground',
@@ -44,7 +44,7 @@ export function Alerta({
       <Icone className={cn('mt-0.5 size-4 shrink-0', corDoIcone)} aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <p className="font-medium">{titulo}</p>
-        {children && <div className="mt-0.5 text-[13px] text-muted-foreground">{children}</div>}
+        {children && <div className="mt-0.5 text-rotulo text-muted-foreground">{children}</div>}
       </div>
       {aoFechar && (
         <button

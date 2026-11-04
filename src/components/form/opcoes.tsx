@@ -19,9 +19,9 @@ export function OpcaoMarcavel({
   return (
     <label
       className={cn(
-        'group flex cursor-pointer items-start gap-3 rounded-lg border p-3.5 transition-[border-color,background-color,box-shadow] hover:bg-muted/40 has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/40',
+        'group flex cursor-pointer items-start gap-3 rounded-lg border p-3.5 transition-[border-color,background-color,box-shadow] hover:bg-muted/40 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring',
         marcada && 'border-primary/40 bg-secondary/60',
-        invalida && !marcada && 'border-destructive/40',
+        invalida && !marcada && 'border-critico/50',
       )}
     >
       <input type="checkbox" className="sr-only" checked={marcada} onChange={aoAlternar} />
@@ -36,7 +36,7 @@ export function OpcaoMarcavel({
       </span>
       <span className="grid gap-0.5">
         <span className="text-sm font-medium">{titulo}</span>
-        {descricao && <span className="text-xs text-muted-foreground">{descricao}</span>}
+        {descricao && <span className="text-apoio text-muted-foreground">{descricao}</span>}
       </span>
     </label>
   )
@@ -62,7 +62,7 @@ export function GrupoDeOpcoes<T extends string>({
         <label
           key={opcao.valor}
           className={cn(
-            'flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2.5 text-[13px] font-medium text-muted-foreground transition-all hover:text-foreground has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/40',
+            'flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2.5 text-rotulo font-medium text-muted-foreground transition-all hover:text-foreground has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring',
             valor === opcao.valor && 'bg-background text-foreground shadow-sm dark:bg-input/40',
           )}
         >

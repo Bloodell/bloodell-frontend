@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Instrument_Sans, JetBrains_Mono } from 'next/font/google'
 import type { ReactNode } from 'react'
 import { Toaster } from 'sonner'
 import { SCRIPT_DO_TEMA } from '@/components/layout/alternar-tema'
@@ -7,8 +7,10 @@ import { BarraSuperior } from '@/components/layout/barra-superior'
 import { Lateral } from '@/components/layout/lateral'
 import './globals.css'
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
-const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' })
+// Interface em Instrument Sans; dados (codigos, lotes, graus, quantidades) em
+// JetBrains Mono, que tem numeros tabulares e distingue 0/O e 1/l/I.
+const fonteInterface = Instrument_Sans({ subsets: ['latin', 'latin-ext'], variable: '--font-interface', display: 'swap' })
+const dados = JetBrains_Mono({ subsets: ['latin', 'latin-ext'], variable: '--font-dados', display: 'swap' })
 
 export const metadata: Metadata = {
   title: { default: 'Bloodell', template: '%s · Bloodell' },
@@ -17,14 +19,14 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f4f8f6' },
-    { media: '(prefers-color-scheme: dark)', color: '#0a1410' },
+    { media: '(prefers-color-scheme: light)', color: '#f6f6f9' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f0e16' },
   ],
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${geist.variable} ${geistMono.variable}`} suppressHydrationWarning>
+    <html lang="pt-BR" className={`${fonteInterface.variable} ${dados.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: SCRIPT_DO_TEMA }} />
       </head>

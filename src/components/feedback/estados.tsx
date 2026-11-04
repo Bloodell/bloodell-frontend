@@ -23,7 +23,7 @@ export function EstadoVazio({
         <Icone className="size-5 text-muted-foreground" aria-hidden="true" />
       </div>
       <p className="text-sm font-medium">{titulo}</p>
-      {descricao && <p className="mt-1 max-w-sm text-[13px] text-muted-foreground">{descricao}</p>}
+      {descricao && <p className="mt-1 max-w-sm text-rotulo text-muted-foreground">{descricao}</p>}
       {acao && <div className="mt-5">{acao}</div>}
     </div>
   )
@@ -41,11 +41,11 @@ export function EstadoDeErro({
 }) {
   return (
     <div role="alert" className={cn('flex flex-col items-center justify-center px-6 py-14 text-center', className)}>
-      <div className="mb-4 flex size-11 items-center justify-center rounded-xl border border-destructive/20 bg-destructive/5">
-        <AlertCircle className="size-5 text-destructive" aria-hidden="true" />
+      <div className="mb-4 flex size-11 items-center justify-center rounded-xl border border-critico/30 bg-critico-suave">
+        <AlertCircle className="size-5 text-critico" aria-hidden="true" />
       </div>
       <p className="text-sm font-medium">Não foi possível carregar</p>
-      <p className="mt-1 max-w-md text-[13px] text-muted-foreground">{mensagem}</p>
+      <p className="mt-1 max-w-md text-rotulo text-muted-foreground">{mensagem}</p>
       {aoTentarNovamente && (
         <Button variant="outline" size="sm" className="mt-5" onClick={aoTentarNovamente}>
           <RotateCw />

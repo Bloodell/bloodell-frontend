@@ -4,6 +4,7 @@ import {
   ClipboardList,
   Droplet,
   LayoutGrid,
+  MapPinned,
   Network,
   Thermometer,
   Truck,
@@ -29,6 +30,7 @@ export const GRUPOS_DE_NAVEGACAO: { titulo: string; itens: ItemDeNavegacao[] }[]
   {
     titulo: 'Logística',
     itens: [
+      { caminho: '/rastreamento', rotulo: 'Central logística', icone: MapPinned },
       { caminho: '/entregas', rotulo: 'Entregas', icone: Truck },
       { caminho: '/cadeia-fria', rotulo: 'Cadeia fria', icone: Thermometer },
     ],

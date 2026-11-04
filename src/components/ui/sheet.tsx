@@ -35,12 +35,12 @@ export function Sheet({
             <div className="min-w-0">
               <Dialog.Title className="text-base font-semibold tracking-tight">{titulo}</Dialog.Title>
               {descricao ? (
-                <Dialog.Description className="mt-1 text-[13px] text-muted-foreground">{descricao}</Dialog.Description>
+                <Dialog.Description className="mt-1 text-rotulo text-muted-foreground">{descricao}</Dialog.Description>
               ) : (
                 <Dialog.Description className="sr-only">Detalhes</Dialog.Description>
               )}
             </div>
-            <Dialog.Close className="-mr-2 rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none">
+            <Dialog.Close className="-mr-2 rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
               <X className="size-4" />
               <span className="sr-only">Fechar</span>
             </Dialog.Close>

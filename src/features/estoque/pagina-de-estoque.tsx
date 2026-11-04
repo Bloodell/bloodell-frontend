@@ -99,7 +99,7 @@ export function PaginaDeEstoque() {
       <AvisoAcademico />
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <span className="flex items-center gap-2 text-[13px] font-medium text-muted-foreground sm:mr-1">
+        <span className="flex items-center gap-2 text-rotulo font-medium text-muted-foreground sm:mr-1">
           <SlidersHorizontal className="size-4" aria-hidden="true" />
           Filtrar estoque
         </span>

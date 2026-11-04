@@ -36,7 +36,7 @@ export function BarraSuperior() {
         </Dialog.Portal>
       </Dialog.Root>
 
-      <nav aria-label="Você está em" className="flex min-w-0 items-center gap-2 text-[13px]">
+      <nav aria-label="Você está em" className="flex min-w-0 items-center gap-2 text-rotulo">
         <span className="hidden text-muted-foreground sm:inline">Rede Bloodell</span>
         <span className="hidden text-muted-foreground/50 sm:inline" aria-hidden="true">
           /
@@ -56,12 +56,12 @@ export function BarraSuperior() {
         </a>
         <AlternarTema />
         <div className="ml-2 hidden items-center gap-2.5 border-l pl-3 sm:flex">
-          <span className="flex size-7 items-center justify-center rounded-full bg-muted text-[11px] font-semibold">
+          <span className="flex size-7 items-center justify-center rounded-full bg-muted text-apoio font-semibold">
             BD
           </span>
           <div className="leading-tight">
-            <p className="text-xs font-medium">Demonstração</p>
-            <p className="text-[11px] text-muted-foreground">Sem autenticação</p>
+            <p className="text-apoio font-medium">Demonstração</p>
+            <p className="text-apoio text-muted-foreground">Sem autenticação</p>
           </div>
         </div>
       </div>

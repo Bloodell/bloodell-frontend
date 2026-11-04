@@ -41,13 +41,13 @@ export function Campo({
       </Label>
       {children({ id, 'aria-invalid': erro ? true : undefined, 'aria-describedby': idDaMensagem })}
       {erro ? (
-        <p id={idDaMensagem} className="flex items-center gap-1.5 text-xs text-destructive animate-entrar">
+        <p id={idDaMensagem} className="flex items-center gap-1.5 text-apoio text-critico animate-entrar">
           <AlertCircle className="size-3.5 shrink-0" aria-hidden="true" />
           {erro}
         </p>
       ) : (
         ajuda && (
-          <p id={idDaMensagem} className="text-xs text-muted-foreground">
+          <p id={idDaMensagem} className="text-apoio text-muted-foreground">
             {ajuda}
           </p>
         )

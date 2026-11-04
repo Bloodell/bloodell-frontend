@@ -11,13 +11,13 @@ import { cn } from '@/lib/utils'
 export function ResultadoDaDoacao({ doacao }: { doacao: Doacao }) {
   return (
     <Card className="overflow-hidden animate-entrar">
-      <div className="flex items-start gap-3 border-b bg-emerald-500/5 px-6 py-4">
-        <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+      <div className="flex items-start gap-3 border-b bg-estavel-suave px-6 py-4">
+        <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-estavel" aria-hidden="true" />
         <div>
           <p className="text-sm font-medium">
             Doação <span className="font-mono">{doacao.codigo}</span> registrada
           </p>
-          <p className="mt-0.5 text-[13px] text-muted-foreground">
+          <p className="mt-0.5 text-rotulo text-muted-foreground">
             {doacao.tipoSanguineo} · {doacao.volumeMl} ml · {doacao.bolsasGeradas.length} bolsa(s) no estoque
           </p>
         </div>
@@ -26,8 +26,8 @@ export function ResultadoDaDoacao({ doacao }: { doacao: Doacao }) {
         {doacao.bolsasGeradas.map((bolsa) => (
           <li key={bolsa.id} className="flex items-center justify-between gap-4 px-6 py-3">
             <div className="min-w-0">
-              <p className="truncate font-mono text-[13px]">{bolsa.codigo}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="truncate font-mono text-rotulo">{bolsa.codigo}</p>
+              <p className="text-apoio text-muted-foreground">
                 {rotulo(bolsa.componente)} · vence {data(bolsa.dataValidade)}
               </p>
             </div>

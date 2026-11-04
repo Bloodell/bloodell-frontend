@@ -30,13 +30,13 @@ export function PaginaDeDoacoes() {
     {
       id: 'codigo',
       cabecalho: 'Código',
-      celula: (doacao) => <span className="font-mono text-[13px]">{doacao.codigo}</span>,
+      celula: (doacao) => <span className="font-mono text-rotulo">{doacao.codigo}</span>,
       esqueleto: 'w-28',
     },
     {
       id: 'tipo',
       cabecalho: 'Tipo',
-      celula: (doacao) => <span className="font-mono text-[13px] font-semibold">{doacao.tipoSanguineo}</span>,
+      celula: (doacao) => <span className="font-mono text-rotulo font-semibold">{doacao.tipoSanguineo}</span>,
       esqueleto: 'w-8',
     },
     {

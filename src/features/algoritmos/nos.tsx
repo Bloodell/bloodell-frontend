@@ -12,8 +12,8 @@ export function No({ titulo, children, destaque }: { titulo: string; children?: 
         destaque && 'border-primary/40 ring-1 ring-primary/15',
       )}
     >
-      <p className="truncate font-mono text-xs font-medium">{titulo}</p>
-      <div className="mt-1.5 space-y-1 text-xs text-muted-foreground">{children}</div>
+      <p className="truncate font-mono text-apoio font-medium">{titulo}</p>
+      <div className="mt-1.5 space-y-1 text-apoio text-muted-foreground">{children}</div>
     </div>
   )
 }
@@ -31,7 +31,7 @@ export function Encadeamento({ children }: { children: ReactNode[] }) {
             </span>
           </li>
         ))}
-        <li className="self-center rounded-md border border-dashed px-2.5 py-1 font-mono text-xs text-muted-foreground">
+        <li className="self-center rounded-md border border-dashed px-2.5 py-1 font-mono text-apoio text-muted-foreground">
           null
         </li>
       </ol>

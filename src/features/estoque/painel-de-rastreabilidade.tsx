@@ -13,7 +13,7 @@ import { Validade } from './validade'
 function Detalhe({ rotulo: nome, children }: { rotulo: string; children: React.ReactNode }) {
   return (
     <div className="grid gap-1">
-      <dt className="text-xs text-muted-foreground">{nome}</dt>
+      <dt className="text-apoio text-muted-foreground">{nome}</dt>
       <dd className="text-sm">{children}</dd>
     </div>
   )
@@ -80,8 +80,8 @@ export function PainelDeRastreabilidade({ bolsa, aoFechar }: { bolsa: Bolsa | nu
                       ) : null}
                       <span className="font-medium">{rotulo(evento.statusNovo)}</span>
                     </p>
-                    {evento.descricao && <p className="mt-0.5 text-[13px] text-muted-foreground">{evento.descricao}</p>}
-                    <p className="mt-1 text-xs text-muted-foreground tabular-nums">{dataHora(evento.ocorridoEm)}</p>
+                    {evento.descricao && <p className="mt-0.5 text-rotulo text-muted-foreground">{evento.descricao}</p>}
+                    <p className="mt-1 text-apoio text-muted-foreground tabular-nums">{dataHora(evento.ocorridoEm)}</p>
                   </li>
                 ))}
               </ol>

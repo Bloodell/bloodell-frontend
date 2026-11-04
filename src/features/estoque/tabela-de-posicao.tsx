@@ -13,7 +13,7 @@ const colunas: Coluna<ItemDeEstoque>[] = [
   {
     id: 'tipo',
     cabecalho: 'Tipo',
-    celula: (item) => <span className="font-mono text-[13px] font-semibold">{item.tipoSanguineo}</span>,
+    celula: (item) => <span className="font-mono text-rotulo font-semibold">{item.tipoSanguineo}</span>,
     esqueleto: 'w-8',
   },
   { id: 'componente', cabecalho: 'Componente', celula: (item) => rotulo(item.componente), esqueleto: 'w-36' },
