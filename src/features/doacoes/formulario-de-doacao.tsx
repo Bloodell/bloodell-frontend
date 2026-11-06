@@ -160,7 +160,7 @@ export function FormularioDeDoacao({
                 onChange={(evento) => mudar('volumeMl', evento.target.value)}
                 className="pr-10 tabular-nums"
               />
-              <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-[13px] text-muted-foreground">
+              <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-rotulo text-muted-foreground">
                 ml
               </span>
             </div>
@@ -169,7 +169,7 @@ export function FormularioDeDoacao({
       </div>
 
       <fieldset className="grid gap-2">
-        <legend className="mb-2 text-[13px] font-medium">Componentes a gerar</legend>
+        <legend className="mb-2 text-rotulo font-medium">Componentes a gerar</legend>
         <div className="grid gap-2 sm:grid-cols-3">
           {COMPONENTES.map((opcao) => (
             <OpcaoMarcavel
@@ -182,13 +182,13 @@ export function FormularioDeDoacao({
             />
           ))}
         </div>
-        {erros.componentes && <p className="text-xs text-destructive animate-entrar">{erros.componentes}</p>}
+        {erros.componentes && <p className="text-apoio text-critico animate-entrar">{erros.componentes}</p>}
       </fieldset>
 
       {envio.erro && <Alerta tipo="erro" titulo="A API recusou a doação">{envio.erro}</Alerta>}
 
       <div className="flex items-center justify-between gap-4 border-t pt-5">
-        <p className="text-xs text-muted-foreground">Uma bolsa é gerada para cada componente marcado.</p>
+        <p className="text-apoio text-muted-foreground">Uma bolsa é gerada para cada componente marcado.</p>
         <Button type="submit" carregando={envio.enviando}>
           {!envio.enviando && <Droplet />}
           {envio.enviando ? 'Registrando…' : 'Registrar doação'}

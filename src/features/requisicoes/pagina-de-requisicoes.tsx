@@ -118,7 +118,7 @@ export function PaginaDeRequisicoes() {
               <CardDescription>Emergência, depois urgente, depois eletiva; empate pela ordem de chegada.</CardDescription>
             </div>
             {fila.dados && fila.dados.length > 0 && (
-              <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium tabular-nums">
+              <span className="rounded-md bg-muted px-2 py-1 text-apoio font-medium tabular-nums">
                 {fila.dados.length} aguardando
               </span>
             )}

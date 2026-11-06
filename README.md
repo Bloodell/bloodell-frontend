@@ -93,6 +93,63 @@ src/
     formatos.ts        rótulos legíveis dos enums, tons de status, datas e números
 ```
 
+## Sistema visual
+
+A identidade é definida por **papéis**, não por cores soltas (tokens em
+`src/app/globals.css`). Nenhum papel divide matiz com outro:
+
+| Papel | Cor | Uso |
+|---|---|---|
+| Marca | violeta | identidade e ação primária; nunca indica estado |
+| Crítico | grená | emergência, bolsa vencida, temperatura fora da faixa, erro |
+| Atenção | âmbar | vence em breve, fila urgente |
+| Estável | verde | disponível, dentro da faixa, atendida |
+| Cadeia fria | azul-gelo | temperatura, transporte refrigerado |
+
+- **Nada depende só de cor**: todo estado tem ícone + texto (`Badge`, `Validade`).
+  O Rh do tipo sanguíneo é bloco cheio (+) ou vazado (−); no gráfico, hachura.
+- **Tipografia**: Instrument Sans na interface e JetBrains Mono nos dados (códigos,
+  lotes, °C). A escala é nomeada (`text-apoio`, `text-rotulo`, `text-subtitulo`,
+  `text-titulo`, `text-metrica`, `text-display`) e em `rem`; não use `text-[13px]`.
+  O modo telão (`html[data-telao="true"]`) amplia a base para 125%.
+- **Contraste**: `npm run contraste` confere os pares texto/fundo dos dois temas
+  contra a WCAG AA e falha se algum ficar abaixo.
+- **Referência viva**: a rota `/design` mostra cores, escala, estados, tipo
+  sanguíneo e a Etiqueta de Bolsa (valores ilustrativos, sem API).
+
+## Central logística (`/rastreamento`)
+
+Mapa 3D isométrico das entregas em andamento: MapLibre GL JS para a base e as rotas,
+Three.js para os caminhões (modelo procedural de ~60 triângulos, sem arquivo GLB),
+Turf.js para comprimento, rumo e projeção sobre a rota. O código está em
+`src/features/rastreamento/`.
+
+**De onde vem cada dado** (nada é apresentado como mais real do que é):
+
+| Dado | Origem |
+|---|---|
+| Hemocentros, hospitais, requisições, entregas, veículos, status | API (`/hemocentros`, `/hospitais`, `/requisicoes`, `/entregas`, `/veiculos`) |
+| Geometria das rotas por ruas | Serviço de roteamento OSRM no navegador. O backend só calcula distância em linha reta (Haversine) e não guarda trajetos. Se o serviço não responde, a rota vira uma curva aproximada e a tela avisa |
+| Posição do veículo | `telemetria` (última posição reportada, aceita se estiver a menos de 350 m da rota), `estimada` (pelo horário de início e tempo previsto, sem GPS) ou `simulacao` |
+| Base do mapa (ruas, prédios 3D) | OpenFreeMap (tiles OpenMapTiles), reestilizada em `estilo-do-mapa.ts` |
+
+- **Simulação**: sem entregas em andamento na API (ou com a API fora do ar), a tela
+  exibe uma rede fictícia no Recife, marcada em todo lugar como **SIMULAÇÃO**
+  (selo, faixa e texto no painel de detalhes). O botão "Ver simulação" força esse modo.
+- **Servidor de rotas**: o OSRM público serve para demonstração e não tem garantia
+  de disponibilidade. Em produção, use uma instância própria
+  (`NEXT_PUBLIC_ROUTING_URL`, veja `.env.example`).
+- **Nginx/CSP**: se a EC2 definir `Content-Security-Policy`, o mapa precisa de
+  `worker-src blob:`, `img-src data: blob:` e `connect-src` para
+  `tiles.openfreemap.org` e para o servidor de rotas.
+- **Robustez**: o mapa só carrega no cliente (`next/dynamic`, `ssr: false`), em um
+  chunk próprio; sem WebGL a tela mostra só a lista e os indicadores; se o contexto
+  WebGL é perdido, o mapa é recriado quando ele volta; `prefers-reduced-motion`
+  desliga o fluxo animado nas rotas, o pulso do anel e a interpolação (a posição
+  passa a atualizar uma vez por segundo).
+- **Não há** árvores e mobiliário urbano individuais: a vegetação aparece como áreas
+  (parques e matas) da base cartográfica.
+
 ## Padrões de interface
 
 - **Tabelas**: `TabelaDeDados` recebe colunas declarativas e mostra skeleton com o

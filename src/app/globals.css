@@ -3,87 +3,147 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Identidade visual do BLOODELL, com tokens no padrao do shadcn/ui (cada cor
- * tem nome de PAPEL, nao de matiz).
- *   Verde  = vida, disponibilidade, acao positiva  (#0F5132 e #22C55E)
- *   Vermelho = sangue, urgencia, alerta            (#DC2626)
- *   Branco = superficies; fundo levemente esverdeado (#F4F8F6)
+ * Sistema visual do BLOODELL.
+ *
+ * Regra de ouro: cada cor tem um PAPEL e nenhum papel divide matiz com outro.
+ *   Marca       violeta   identidade e acao primaria; nunca carrega estado
+ *   Critico     grena     emergencia, vencida, temperatura fora da faixa, erro
+ *   Atencao     ambar     vence em breve, fila urgente
+ *   Estavel     verde     disponivel, dentro da faixa, atendida
+ *   Cadeia fria azul      temperatura, transporte refrigerado, telemetria
+ * Cor nunca e o unico sinal: todo estado vem com icone e texto (ver Badge).
+ *
+ * Os valores abaixo foram conferidos por `npm run contraste` (WCAG AA).
  */
 :root {
-  --radius: 0.625rem;
-
-  --background: #f4f8f6;
-  --foreground: #1f2937;
+  /* Superficies e texto: cinza-pedra levemente frio, sem tom verde. */
+  --background: #f6f6f9;
+  --foreground: #17151f;
   --card: #ffffff;
-  --card-foreground: #1f2937;
+  --card-foreground: #17151f;
   --popover: #ffffff;
-  --popover-foreground: #1f2937;
-  --primary: #0f5132;
+  --popover-foreground: #17151f;
+  --muted: #eeeef3;
+  --muted-foreground: #5c5970;
+  --border: #e3e2ec;
+  /* Borda de campo de formulario: 3:1 contra o fundo (WCAG 1.4.11). */
+  --input: #8b87a1;
+
+  /* Marca. */
+  --primary: #5f42f0;
   --primary-foreground: #ffffff;
-  --secondary: #e6f6ec;
-  --secondary-foreground: #0f5132;
-  --muted: #eef4f1;
-  --muted-foreground: #64736d;
-  --accent: #e9f3ee;
-  --accent-foreground: #0f5132;
-  --border: #e1ebe6;
-  --input: #d6e4dc;
-  --ring: #22c55e;
+  --secondary: #ece9ff;
+  --secondary-foreground: #3a2a9e;
+  --accent: #edebf8;
+  --accent-foreground: #2b2250;
+  --ring: #5f42f0;
 
-  --brand: #dc2626;
-  --destructive: #dc2626;
-  --success: #22c55e;
+  /* Papeis operacionais: cor do icone/texto e fundo suave do indicador. */
+  --critico: #a3152e;
+  --critico-suave: #fbe9ec;
+  --critico-foreground: #ffffff;
+  --atencao: #9a4a06;
+  --atencao-suave: #fdf0e0;
+  --estavel: #1f7a4d;
+  --estavel-suave: #e5f4ec;
+  --frio: #0e6a8c;
+  --frio-suave: #e2f1f7;
 
-  /* Barra lateral em verde-escuro, texto claro. */
-  --sidebar: #0b4a35;
-  --sidebar-foreground: #d3e8da;
-  --sidebar-muted: #9bc9ad;
-  --sidebar-accent: rgb(255 255 255 / 10%);
-  --sidebar-active: #1a6647;
-  --sidebar-indicator: #47db80;
-  --sidebar-border: rgb(255 255 255 / 12%);
+  --destructive: var(--critico);
+
+  /* Barra lateral: tinta-violeta, escura nos dois temas. */
+  --sidebar: #1b1636;
+  --sidebar-foreground: #dcd8f2;
+  --sidebar-muted: #a9a3d0;
+  --sidebar-accent: rgb(255 255 255 / 8%);
+  --sidebar-active: #2d2563;
+  --sidebar-indicator: #a894ff;
+  --sidebar-border: rgb(255 255 255 / 10%);
+
+  --sombra-cor: 23 21 31;
 }
 
 .dark {
-  --background: #0a1410;
-  --foreground: #e8f2ec;
-  --card: #0f1c16;
-  --card-foreground: #e8f2ec;
-  --popover: #0f1c16;
-  --popover-foreground: #e8f2ec;
-  --primary: #22c55e;
-  --primary-foreground: #052e1b;
-  --secondary: #163126;
-  --secondary-foreground: #e8f2ec;
-  --muted: #15251e;
-  --muted-foreground: #8fa79a;
-  --accent: #18302a;
-  --accent-foreground: #e8f2ec;
-  --border: rgb(255 255 255 / 9%);
-  --input: rgb(255 255 255 / 13%);
-  --ring: #22c55e;
+  --background: #0f0e16;
+  --foreground: #eeedf5;
+  --card: #17151f;
+  --card-foreground: #eeedf5;
+  --popover: #1c1a27;
+  --popover-foreground: #eeedf5;
+  --muted: #1f1d2b;
+  --muted-foreground: #a3a0b8;
+  --border: rgb(255 255 255 / 10%);
+  --input: #77738f;
 
-  --brand: #ef4444;
-  --destructive: #f87171;
-  --success: #22c55e;
+  --primary: #a08cff;
+  --primary-foreground: #14102e;
+  --secondary: #272250;
+  --secondary-foreground: #e4defd;
+  --accent: #25223a;
+  --accent-foreground: #eeedf5;
+  --ring: #a894ff;
 
-  --sidebar: #072a1e;
-  --sidebar-foreground: #c9e2d2;
-  --sidebar-muted: #7fae92;
-  --sidebar-accent: rgb(255 255 255 / 7%);
-  --sidebar-active: #145238;
-  --sidebar-indicator: #47db80;
+  --critico: #ff8093;
+  --critico-suave: #3a1620;
+  --critico-foreground: #2c0a11;
+  --atencao: #f4aa5e;
+  --atencao-suave: #35210c;
+  --estavel: #52c88e;
+  --estavel-suave: #0f2d20;
+  --frio: #62bfe0;
+  --frio-suave: #0d2b38;
+
+  --sidebar: #120f26;
+  --sidebar-foreground: #d3cfec;
+  --sidebar-muted: #9d97c6;
+  --sidebar-active: #272054;
+  --sidebar-indicator: #a894ff;
   --sidebar-border: rgb(255 255 255 / 8%);
+
+  --sombra-cor: 0 0 0;
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-sans: var(--font-interface), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-dados), ui-monospace, monospace;
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* Raio por papel: controle < etiqueta/painel interno < painel. */
+  /* Instrument Sans ja e compacta: o tracking-tight padrao do Tailwind a aperta demais. */
+  --tracking-tight: -0.012em;
+
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+
+  /* Sombras com tinta da propria interface, em vez de cinza generico. */
+  --shadow-xs: 0 1px 0 rgb(var(--sombra-cor) / 4%), 0 1px 2px rgb(var(--sombra-cor) / 7%);
+  --shadow-sm: 0 1px 2px rgb(var(--sombra-cor) / 8%), 0 2px 6px rgb(var(--sombra-cor) / 6%);
+  --shadow-lg: 0 8px 24px rgb(var(--sombra-cor) / 14%), 0 2px 6px rgb(var(--sombra-cor) / 8%);
+
+  /*
+   * Escala tipografica NOMEADA, em rem: o modo telao (html[data-telao]) amplia
+   * tudo mudando so o tamanho-base. Nada de text-[13px] solto nas telas.
+   *   apoio    legendas, eixos de grafico, metadados
+   *   rotulo   rotulos de campo, tabelas, texto de apoio denso
+   *   corpo    texto corrido (text-sm do Tailwind, 14px)
+   *   subtitulo titulo de cartao
+   *   titulo   titulo de pagina
+   *   metrica  numero-chave de um indicador
+   *   display  numero em destaque no painel
+   */
+  --text-apoio: 0.75rem;
+  --text-apoio--line-height: 1.0625rem;
+  --text-rotulo: 0.8125rem;
+  --text-rotulo--line-height: 1.25rem;
+  --text-subtitulo: 0.9375rem;
+  --text-subtitulo--line-height: 1.25rem;
+  --text-titulo: 1.75rem;
+  --text-titulo--line-height: 2.125rem;
+  --text-metrica: 2rem;
+  --text-metrica--line-height: 2rem;
+  --text-display: 3rem;
+  --text-display--line-height: 1;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -102,9 +162,18 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-brand: var(--brand);
   --color-destructive: var(--destructive);
-  --color-success: var(--success);
+
+  --color-critico: var(--critico);
+  --color-critico-suave: var(--critico-suave);
+  --color-critico-foreground: var(--critico-foreground);
+  --color-atencao: var(--atencao);
+  --color-atencao-suave: var(--atencao-suave);
+  --color-estavel: var(--estavel);
+  --color-estavel-suave: var(--estavel-suave);
+  --color-frio: var(--frio);
+  --color-frio-suave: var(--frio-suave);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-muted: var(--sidebar-muted);
@@ -133,6 +202,13 @@
   }
 }
 
+@keyframes painel-entra {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
 @keyframes sheet-in {
   from {
     transform: translateX(100%);
@@ -156,9 +232,15 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* Modo telao: tudo esta em rem, entao ampliar a base amplia a interface. */
+  html[data-telao='true'] {
+    font-size: 125%;
+  }
+
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: 'cv11', 'ss01';
+    /* Instrument Sans tem espaco entre palavras estreito; um pouco mais abre a leitura. */
+    word-spacing: 0.05em;
   }
 
   ::selection {

@@ -147,7 +147,7 @@ export function PaginaDoPainel() {
           <CardHeader>
             <div>
               <CardTitle>Estoque por tipo sanguíneo</CardTitle>
-              <CardDescription>Bolsas disponíveis: tipos positivos em verde, negativos em vermelho.</CardDescription>
+              <CardDescription>Bolsas disponíveis. Barra cheia é Rh positivo; hachurada, Rh negativo.</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
@@ -196,7 +196,7 @@ export function PaginaDoPainel() {
               <CardTitle>Entregas em rota</CardTitle>
               <CardDescription>As quatro mais recentes.</CardDescription>
             </div>
-            <Link href="/entregas" className="text-[13px] font-medium text-muted-foreground hover:text-foreground">
+            <Link href="/entregas" className="text-rotulo font-medium text-muted-foreground hover:text-foreground">
               Ver todas
             </Link>
           </CardHeader>
@@ -215,8 +215,8 @@ export function PaginaDoPainel() {
               {emRota.slice(0, 4).map((entrega) => (
                 <li key={entrega.id} className="flex items-center justify-between gap-3 px-6 py-3">
                   <div className="min-w-0">
-                    <p className="font-mono text-[13px]">{entrega.requisicaoCodigo}</p>
-                    <p className="truncate text-xs text-muted-foreground">
+                    <p className="font-mono text-rotulo">{entrega.requisicaoCodigo}</p>
+                    <p className="truncate text-apoio text-muted-foreground">
                       {entrega.veiculoPlaca} · {entrega.origemNome}
                     </p>
                   </div>
@@ -248,7 +248,7 @@ export function PaginaDoPainel() {
                   {numero(Math.round(tempos.dados.tempoAteAtendimento.media))}
                   <span className="ml-1.5 text-base font-normal text-muted-foreground">{tempos.dados.unidade}</span>
                 </p>
-                <dl className="mt-5 grid grid-cols-3 gap-3 border-t pt-4 text-xs">
+                <dl className="mt-5 grid grid-cols-3 gap-3 border-t pt-4 text-apoio">
                   {[
                     ['Mediana', tempos.dados.tempoAteAtendimento.mediana],
                     ['Mínimo', tempos.dados.tempoAteAtendimento.minimo],
@@ -260,7 +260,7 @@ export function PaginaDoPainel() {
                     </div>
                   ))}
                 </dl>
-                <p className="mt-3 text-xs text-muted-foreground">
+                <p className="mt-3 text-apoio text-muted-foreground">
                   Sobre {numero(tempos.dados.requisicoesAtendidas)} requisição(ões) atendida(s).
                 </p>
               </>
@@ -287,7 +287,7 @@ export function PaginaDoPainel() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium">{nome}</span>
-                  <span className="block text-xs text-muted-foreground">{descricao}</span>
+                  <span className="block text-apoio text-muted-foreground">{descricao}</span>
                 </span>
                 <ArrowUpRight
                   className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"

@@ -20,13 +20,13 @@ const colunas: Coluna<Bolsa>[] = [
   {
     id: 'codigo',
     cabecalho: 'Código',
-    celula: (bolsa) => <span className="font-mono text-[13px]">{bolsa.codigo}</span>,
+    celula: (bolsa) => <span className="font-mono text-rotulo">{bolsa.codigo}</span>,
     esqueleto: 'w-32',
   },
   {
     id: 'tipo',
     cabecalho: 'Tipo',
-    celula: (bolsa) => <span className="font-mono text-[13px] font-semibold">{bolsa.tipoSanguineo}</span>,
+    celula: (bolsa) => <span className="font-mono text-rotulo font-semibold">{bolsa.tipoSanguineo}</span>,
     esqueleto: 'w-8',
   },
   {

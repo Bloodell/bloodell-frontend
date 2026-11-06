@@ -24,7 +24,7 @@ const colunasDaFrota: Coluna<Veiculo>[] = [
   {
     id: 'placa',
     cabecalho: 'Placa',
-    celula: (veiculo) => <span className="font-mono text-[13px] font-medium">{veiculo.placa}</span>,
+    celula: (veiculo) => <span className="font-mono text-rotulo font-medium">{veiculo.placa}</span>,
     esqueleto: 'w-20',
   },
   { id: 'base', cabecalho: 'Base', celula: (veiculo) => veiculo.hemocentroBaseNome, esqueleto: 'w-32' },
@@ -47,7 +47,7 @@ const colunasDaFrota: Coluna<Veiculo>[] = [
     id: 'posicao',
     cabecalho: 'Última posição',
     celula: (veiculo) => (
-      <span className="font-mono text-xs text-muted-foreground">
+      <span className="font-mono text-apoio text-muted-foreground">
         {veiculo.latitude.toFixed(4)}, {veiculo.longitude.toFixed(4)}
       </span>
     ),
@@ -62,7 +62,7 @@ function ListaDeAlertas({ alertas }: { alertas: Alerta[] }) {
       {alertas.map((alerta) => (
         <li key={alerta.id} className="flex gap-3 px-6 py-3.5">
           <AlertTriangle
-            className={alerta.nivel === 'CRITICO' ? 'mt-0.5 size-4 shrink-0 text-destructive' : 'mt-0.5 size-4 shrink-0 text-amber-500'}
+            className={alerta.nivel === 'CRITICO' ? 'mt-0.5 size-4 shrink-0 text-critico' : 'mt-0.5 size-4 shrink-0 text-atencao'}
             aria-hidden="true"
           />
           <div className="min-w-0 flex-1">
@@ -72,8 +72,8 @@ function ListaDeAlertas({ alertas }: { alertas: Alerta[] }) {
                 {rotulo(alerta.nivel)}
               </Badge>
             </div>
-            <p className="mt-0.5 text-[13px] text-muted-foreground">{alerta.mensagem}</p>
-            <p className="mt-1 text-xs text-muted-foreground tabular-nums">{dataHora(alerta.criadoEm)}</p>
+            <p className="mt-0.5 text-rotulo text-muted-foreground">{alerta.mensagem}</p>
+            <p className="mt-1 text-apoio text-muted-foreground tabular-nums">{dataHora(alerta.criadoEm)}</p>
           </div>
         </li>
       ))}

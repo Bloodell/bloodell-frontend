@@ -13,7 +13,7 @@ export function ConteudoDaLateral({ aoNavegar }: { aoNavegar?: () => void }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-14 items-center px-5">
-        <Link href="/" onClick={aoNavegar} className="rounded-md text-white outline-none focus-visible:ring-[3px] focus-visible:ring-sidebar-indicator/50">
+        <Link href="/" onClick={aoNavegar} className="rounded-md text-white outline-none focus-visible:ring-2 focus-visible:ring-sidebar-indicator">
           <Marca />
         </Link>
       </div>
@@ -21,7 +21,7 @@ export function ConteudoDaLateral({ aoNavegar }: { aoNavegar?: () => void }) {
       <nav aria-label="Navegação principal" className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
         {GRUPOS_DE_NAVEGACAO.map((grupo) => (
           <div key={grupo.titulo}>
-            <p className="mb-1.5 px-2.5 text-[11px] font-medium tracking-wide text-sidebar-muted uppercase">
+            <p className="mb-1.5 px-2.5 text-apoio font-medium tracking-wide text-sidebar-muted uppercase">
               {grupo.titulo}
             </p>
             <ul className="space-y-0.5">
@@ -34,7 +34,7 @@ export function ConteudoDaLateral({ aoNavegar }: { aoNavegar?: () => void }) {
                       onClick={aoNavegar}
                       aria-current={ativo ? 'page' : undefined}
                       className={cn(
-                        'group flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13px] font-medium text-sidebar-foreground transition-colors outline-none hover:bg-sidebar-accent hover:text-white focus-visible:ring-[3px] focus-visible:ring-sidebar-indicator/50',
+                        'group flex h-8 items-center gap-2.5 rounded-md px-2.5 text-rotulo font-medium text-sidebar-foreground transition-colors outline-none hover:bg-sidebar-accent hover:text-white focus-visible:ring-2 focus-visible:ring-sidebar-indicator',
                         ativo && 'bg-sidebar-active text-white shadow-[inset_3px_0_var(--sidebar-indicator)]',
                       )}
                     >
@@ -58,9 +58,9 @@ export function ConteudoDaLateral({ aoNavegar }: { aoNavegar?: () => void }) {
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-sidebar-indicator opacity-40" />
             <span className="relative inline-flex size-2 rounded-full bg-sidebar-indicator" />
           </span>
-          <p className="text-xs font-medium text-white">Ambiente acadêmico</p>
+          <p className="text-apoio font-medium text-white">Ambiente acadêmico</p>
         </div>
-        <p className="mt-1 text-[11px] leading-relaxed text-sidebar-muted">
+        <p className="mt-1 text-apoio leading-relaxed text-sidebar-muted">
           Dados sintéticos · CESAR School 2026.2
         </p>
       </div>

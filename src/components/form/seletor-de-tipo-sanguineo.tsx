@@ -19,7 +19,7 @@ export function SeletorDeTipoSanguineo({
         <label
           key={tipo}
           className={cn(
-            'flex h-9 cursor-pointer items-center justify-center rounded-md border font-mono text-[13px] font-semibold text-muted-foreground shadow-xs transition-all hover:border-primary/30 hover:text-foreground has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/40',
+            'flex h-9 cursor-pointer items-center justify-center rounded-md border font-mono text-rotulo font-semibold text-muted-foreground shadow-xs transition-all hover:border-primary/30 hover:text-foreground has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring',
             valor === tipo &&
               'border-primary bg-primary text-primary-foreground hover:border-primary hover:text-primary-foreground',
           )}

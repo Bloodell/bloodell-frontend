@@ -29,7 +29,7 @@ export function TabelaDeRequisicoes({
     {
       id: 'codigo',
       cabecalho: 'Código',
-      celula: (requisicao) => <span className="font-mono text-[13px] whitespace-nowrap">{requisicao.codigo}</span>,
+      celula: (requisicao) => <span className="font-mono text-rotulo whitespace-nowrap">{requisicao.codigo}</span>,
       esqueleto: 'w-28',
     },
     {
@@ -38,7 +38,7 @@ export function TabelaDeRequisicoes({
       celula: (requisicao) => (
         <div className="min-w-0">
           <p className="truncate">{requisicao.hospitalNome}</p>
-          <p className="text-xs text-muted-foreground md:hidden">{dataHora(requisicao.criadaEm)}</p>
+          <p className="text-apoio text-muted-foreground md:hidden">{dataHora(requisicao.criadaEm)}</p>
         </div>
       ),
       esqueleto: 'w-36',
@@ -49,7 +49,7 @@ export function TabelaDeRequisicoes({
       celula: (requisicao) => (
         <div className="grid gap-0.5">
           {requisicao.itens.map((item) => (
-            <span key={item.id} className="text-[13px] whitespace-nowrap">
+            <span key={item.id} className="text-rotulo whitespace-nowrap">
               <span className="tabular-nums">{item.quantidade}×</span>{' '}
               <span className="font-mono font-semibold">{item.tipoSanguineo}</span>{' '}
               <span className="text-muted-foreground">{rotulo(item.componente)}</span>

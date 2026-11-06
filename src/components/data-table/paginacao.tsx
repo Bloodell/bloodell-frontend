@@ -46,7 +46,7 @@ export function Paginacao({
         className,
       )}
     >
-      <p className="text-[13px] text-muted-foreground">
+      <p className="text-rotulo text-muted-foreground">
         Mostrando <span className="font-medium text-foreground tabular-nums">{numero(inicio)}–{numero(fim)}</span> de{' '}
         <span className="font-medium text-foreground tabular-nums">{numero(totalItens)}</span>
       </p>
