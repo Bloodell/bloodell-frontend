@@ -10,7 +10,8 @@ import type { UsuarioAtual } from '@/lib/api/tipos'
  * recebe o corpo enviado e devolve { status, corpo }.
  */
 export type Resposta = { status?: number; corpo?: unknown }
-export type Rota = unknown | ((corpo: unknown, url: string) => Resposta)
+export type Manipulador = (corpo: unknown, url: string) => Resposta
+export type Rota = Manipulador | object | string | number | boolean | null
 
 export interface ApiFalsa {
   fetch: ReturnType<typeof vi.fn>
@@ -35,7 +36,7 @@ export function criarApiFalsa(rotas: Record<string, Rota>): ApiFalsa {
         status: 404,
       })
     }
-    const resposta: Resposta = typeof rota === 'function' ? (rota as (c: unknown, u: string) => Resposta)(corpo, caminho) : { corpo: rota }
+    const resposta: Resposta = typeof rota === 'function' ? rota(corpo, caminho) : { corpo: rota }
     const status = resposta.status ?? 200
     if (status === 204) return new Response(null, { status })
     return new Response(JSON.stringify(resposta.corpo ?? null), {
