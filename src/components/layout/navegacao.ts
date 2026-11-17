@@ -42,8 +42,11 @@ export const GRUPOS_DE_NAVEGACAO: { titulo: string; itens: ItemDeNavegacao[] }[]
     titulo: 'Rede',
     itens: [
       { caminho: '/unidades', rotulo: 'Unidades', icone: Building2 },
-      { caminho: '/algoritmos', rotulo: 'Estruturas (AED)', icone: Network },
     ],
+  },
+  {
+    titulo: 'Didático',
+    itens: [{ caminho: '/algoritmos', rotulo: 'Estruturas (AED)', icone: Network }],
   },
   {
     titulo: 'Administração',

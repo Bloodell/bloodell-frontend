@@ -1,16 +1,17 @@
 'use client'
 
 import { Camera, CircleCheck, CircleDashed, Layers, ListOrdered, Rows3 } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { EstadoDeErro, EstadoVazio } from '@/components/feedback/estados'
 import { Cabecalho } from '@/components/layout/cabecalho'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { EstadoDoRecurso } from '@/lib/api/use-recurso'
 import { useRecurso } from '@/lib/api/use-recurso'
-import type { SituacaoDoModuloAed, SnapshotDaFila, SnapshotDaLista, SnapshotDaPilha } from '@/lib/api/tipos'
+import type { SituacaoDoModuloAed, SnapshotDaFila, SnapshotDaLista, SnapshotDaPilha, Unidade } from '@/lib/api/tipos'
 import { data, rotulo, tomDaPrioridade, tomDoEstadoDaBolsa } from '@/lib/formatos'
 import { Encadeamento, EsqueletoDeNos, No } from './nos'
 
@@ -23,6 +24,7 @@ function CartaoDeEstrutura<T extends { tamanho: number; capturadoEm: string; obs
   recurso,
   detalhe,
   vazio,
+  acoes,
   children,
 }: {
   titulo: string
@@ -30,6 +32,7 @@ function CartaoDeEstrutura<T extends { tamanho: number; capturadoEm: string; obs
   recurso: EstadoDoRecurso<T>
   detalhe: (dados: T) => string
   vazio: string
+  acoes?: ReactNode
   children: (dados: T) => ReactNode
 }) {
   const dados = recurso.dados
@@ -45,6 +48,7 @@ function CartaoDeEstrutura<T extends { tamanho: number; capturadoEm: string; obs
             {dados ? `${dados.tamanho} nó(s) · ${detalhe(dados)} · capturado às ${hora(dados.capturadoEm)}` : 'Capturando…'}
           </CardDescription>
         </div>
+        {acoes}
       </CardHeader>
       <CardContent className="space-y-4">
         {recurso.erro ? (
@@ -67,7 +71,9 @@ function CartaoDeEstrutura<T extends { tamanho: number; capturadoEm: string; obs
  * de uma execucao real: o backend monta lista, fila e pilha a partir do banco.
  */
 export function PaginaDeAlgoritmos() {
-  const lista = useRecurso<SnapshotDaLista>('/algoritmos/estoque')
+  const [unidadeId, setUnidadeId] = useState('')
+  const hemocentros = useRecurso<Unidade[]>('/hemocentros')
+  const lista = useRecurso<SnapshotDaLista>(`/algoritmos/estoque${unidadeId ? `?unidadeId=${unidadeId}` : ''}`)
   const fila = useRecurso<SnapshotDaFila>('/algoritmos/fila')
   const pilha = useRecurso<SnapshotDaPilha>('/algoritmos/historico')
   const situacao = useRecurso<SituacaoDoModuloAed>('/algoritmos/situacao')
@@ -140,7 +146,23 @@ export function PaginaDeAlgoritmos() {
         icone={Rows3}
         recurso={lista}
         detalhe={(dados) => `ordem: ${dados.ordem}`}
-        vazio="A lista está vazia: nenhuma bolsa no estoque."
+        vazio={unidadeId ? 'A lista desta unidade está vazia.' : 'A lista está vazia: nenhuma bolsa no estoque.'}
+        acoes={
+          <Select
+            compacto
+            aria-label="Montar a lista de qual hemocentro"
+            value={unidadeId}
+            onChange={(evento) => setUnidadeId(evento.target.value)}
+            className="w-full sm:w-56"
+          >
+            <option value="">Todas as unidades</option>
+            {(hemocentros.dados ?? []).map((unidade) => (
+              <option key={unidade.id} value={unidade.id}>
+                {unidade.nome}
+              </option>
+            ))}
+          </Select>
+        }
       >
         {(dados) => (
           <>

@@ -1,6 +1,6 @@
 'use client'
 
-import { CalendarClock } from 'lucide-react'
+import { CalendarClock, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { Paginacao } from '@/components/data-table/paginacao'
 import { TabelaDeDados, type Coluna } from '@/components/data-table/tabela-de-dados'
@@ -8,11 +8,13 @@ import { usePaginacaoLocal } from '@/components/data-table/use-paginacao-local'
 import { AvisoAcademico } from '@/components/feedback/aviso-academico'
 import { EstadoVazio } from '@/components/feedback/estados'
 import { Cabecalho } from '@/components/layout/cabecalho'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useRecurso } from '@/lib/api/use-recurso'
 import type { Doacao, Unidade } from '@/lib/api/tipos'
 import { COMPONENTES, dataHora, rotulo } from '@/lib/formatos'
 import { FormularioDeDoacao } from './formulario-de-doacao'
+import { PainelDeDoacao } from './painel-de-doacao'
 import { ResultadoDaDoacao } from './resultado-da-doacao'
 
 /** UC1 -- registrar doacao sintetica; cada componente marcado vira uma bolsa. */
@@ -20,6 +22,7 @@ export function PaginaDeDoacoes() {
   const hemocentros = useRecurso<Unidade[]>('/hemocentros')
   const doacoes = useRecurso<Doacao[]>('/doacoes')
   const [ultima, setUltima] = useState<Doacao | null>(null)
+  const [aberta, setAberta] = useState<number | null>(null)
 
   const nomeDoHemocentro = new Map((hemocentros.dados ?? []).map((unidade) => [unidade.id, unidade.nome]))
   // Mais recentes primeiro.
@@ -72,6 +75,17 @@ export function PaginaDeDoacoes() {
       ),
       className: 'text-right',
       esqueleto: 'ml-auto w-24',
+    },
+    {
+      id: 'abrir',
+      cabecalho: <span className="sr-only">Detalhes</span>,
+      celula: (doacao) => (
+        <Button variant="ghost" size="icon-sm" onClick={() => setAberta(doacao.id)} aria-label={`Abrir doação ${doacao.codigo}`}>
+          <ChevronRight />
+        </Button>
+      ),
+      className: 'w-14 text-right',
+      esqueleto: 'ml-auto w-8',
     },
   ]
 
@@ -158,6 +172,12 @@ export function PaginaDeDoacoes() {
           }
         />
       </Card>
+
+      <PainelDeDoacao
+        doacaoId={aberta}
+        nomeDoHemocentro={(id) => nomeDoHemocentro.get(id) ?? `Hemocentro #${id}`}
+        aoFechar={() => setAberta(null)}
+      />
     </div>
   )
 }

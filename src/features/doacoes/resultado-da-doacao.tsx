@@ -26,7 +26,9 @@ export function ResultadoDaDoacao({ doacao }: { doacao: Doacao }) {
         {doacao.bolsasGeradas.map((bolsa) => (
           <li key={bolsa.id} className="flex items-center justify-between gap-4 px-6 py-3">
             <div className="min-w-0">
-              <p className="truncate font-mono text-rotulo">{bolsa.codigo}</p>
+              <Link href={`/estoque?bolsa=${bolsa.id}`} className="block truncate font-mono text-rotulo underline-offset-2 hover:underline">
+                {bolsa.codigo}
+              </Link>
               <p className="text-apoio text-muted-foreground">
                 {rotulo(bolsa.componente)} · vence {data(bolsa.dataValidade)}
               </p>
