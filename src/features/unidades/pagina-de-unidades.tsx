@@ -1,21 +1,29 @@
 'use client'
 
-import { Building2, MapPin } from 'lucide-react'
+import { Building2, Info, MapPin, Trash2 } from 'lucide-react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { BarraDeFiltros, CampoDeBusca } from '@/components/data-table/barra-de-filtros'
 import { Paginacao } from '@/components/data-table/paginacao'
 import { TabelaDeDados, type Coluna } from '@/components/data-table/tabela-de-dados'
 import { usePaginacaoLocal } from '@/components/data-table/use-paginacao-local'
 import { AvisoAcademico } from '@/components/feedback/aviso-academico'
 import { EstadoVazio } from '@/components/feedback/estados'
+import { ConfirmarAcao } from '@/components/form/confirmar-acao'
 import { GrupoDeOpcoes } from '@/components/form/opcoes'
 import { Cabecalho } from '@/components/layout/cabecalho'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { mensagemDeErro } from '@/lib/api/cliente'
 import { useRecurso } from '@/lib/api/use-recurso'
 import type { Unidade } from '@/lib/api/tipos'
+import { cn } from '@/lib/utils'
+import { useSessao } from '../autenticacao/provedor-de-sessao'
+import { podeAdministrarRede } from '../autenticacao/sessao'
 import { FormularioDeUnidade, type TipoDeUnidade } from './formulario-de-unidade'
+import { removerUnidade } from './unidades-api'
 
-const colunas: Coluna<Unidade>[] = [
+const colunasBase: Coluna<Unidade>[] = [
   {
     id: 'nome',
     cabecalho: 'Nome',
@@ -48,6 +56,11 @@ const colunas: Coluna<Unidade>[] = [
 
 /** Rede sintetica: hemocentros que armazenam e hospitais que solicitam. */
 export function PaginaDeUnidades() {
+  const { usuario, demonstracao } = useSessao()
+  const administra = podeAdministrarRede(usuario, demonstracao)
+  const [removendo, setRemovendo] = useState<Unidade | null>(null)
+  const [ocupado, setOcupado] = useState(false)
+  const [erroDaRemocao, setErroDaRemocao] = useState<string | null>(null)
   const hemocentros = useRecurso<Unidade[]>('/hemocentros')
   const hospitais = useRecurso<Unidade[]>('/hospitais')
   const [aba, setAba] = useState<TipoDeUnidade>('hemocentros')
@@ -60,29 +73,73 @@ export function PaginaDeUnidades() {
   )
   const paginacao = usePaginacaoLocal(filtradas, 8)
 
+  const colunas: Coluna<Unidade>[] = administra
+    ? [
+        ...colunasBase,
+        {
+          id: 'acao',
+          cabecalho: <span className="sr-only">Ações</span>,
+          celula: (unidade) => (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Remover ${unidade.nome}`}
+              onClick={() => {
+                setErroDaRemocao(null)
+                setRemovendo(unidade)
+              }}
+            >
+              <Trash2 />
+            </Button>
+          ),
+          className: 'w-14 text-right',
+          esqueleto: 'ml-auto w-8',
+        },
+      ]
+    : colunasBase
+
+  async function confirmarRemocao() {
+    if (!removendo) return
+    setOcupado(true)
+    setErroDaRemocao(null)
+    try {
+      await removerUnidade(removendo)
+      toast.success(`${removendo.nome} removido(a) da rede`)
+      setRemovendo(null)
+    } catch (falha) {
+      // 409: tem historico. A linha continua na tabela; a API explica o motivo.
+      setErroDaRemocao(mensagemDeErro(falha, 'Não foi possível remover a unidade.'))
+    } finally {
+      setOcupado(false)
+      recurso.recarregar()
+    }
+  }
+
   return (
     <div className="space-y-8">
       <Cabecalho titulo="Unidades" descricao="Hemocentros e hospitais da rede sintética, com as coordenadas usadas pela logística." />
 
       <AvisoAcademico />
 
-      <div className="grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
-        <Card>
-          <CardHeader>
-            <div>
-              <CardTitle>Cadastrar unidade</CardTitle>
-              <CardDescription>A coordenada posiciona a unidade nas entregas.</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <FormularioDeUnidade
-              aoCadastrar={(tipo) => {
-                setAba(tipo)
-                ;(tipo === 'hemocentros' ? hemocentros : hospitais).recarregar()
-              }}
-            />
-          </CardContent>
-        </Card>
+      <div className={cn('grid items-start gap-6', administra && 'lg:grid-cols-[340px_minmax(0,1fr)]')}>
+        {administra && (
+          <Card>
+            <CardHeader>
+              <div>
+                <CardTitle>Cadastrar unidade</CardTitle>
+                <CardDescription>A coordenada posiciona a unidade nas entregas.</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <FormularioDeUnidade
+                aoCadastrar={(tipo) => {
+                  setAba(tipo)
+                  ;(tipo === 'hemocentros' ? hemocentros : hospitais).recarregar()
+                }}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="overflow-hidden">
           <CardHeader className="pb-4">
@@ -125,7 +182,13 @@ export function PaginaDeUnidades() {
               <EstadoVazio
                 icone={Building2}
                 titulo={termo ? 'Nenhuma unidade encontrada' : `Nenhum ${aba === 'hemocentros' ? 'hemocentro' : 'hospital'} cadastrado`}
-                descricao={termo ? 'Tente outro termo de busca.' : 'Cadastre a primeira unidade no formulário ao lado.'}
+                descricao={
+                  termo
+                    ? 'Tente outro termo de busca.'
+                    : administra
+                      ? 'Cadastre a primeira unidade no formulário ao lado.'
+                      : 'Sua conta não tem unidade deste tipo vinculada. Fale com o administrador da rede.'
+                }
               />
             }
             rodape={
@@ -140,8 +203,31 @@ export function PaginaDeUnidades() {
               )
             }
           />
+          <p className="flex items-start gap-2 border-t px-6 py-3 text-apoio text-muted-foreground">
+            <Info className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+            <span>
+              Editar unidade ainda não está disponível: a API não devolve logradouro, número, bairro e CEP, e salvar
+              por aqui apagaria esses campos.
+            </span>
+          </p>
         </Card>
       </div>
+
+      <ConfirmarAcao
+        aberto={removendo !== null}
+        titulo={`Remover ${removendo?.nome ?? ''}?`}
+        descricao={
+          <>
+            A unidade sai da rede de vez. Se já houver doações, bolsas, requisições, veículos ou entregas ligadas a ela,
+            a API recusa a remoção para preservar a rastreabilidade.
+          </>
+        }
+        rotuloDaAcao="Remover unidade"
+        ocupado={ocupado}
+        erro={erroDaRemocao}
+        aoConfirmar={confirmarRemocao}
+        aoFechar={() => setRemovendo(null)}
+      />
     </div>
   )
 }

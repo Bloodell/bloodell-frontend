@@ -9,10 +9,9 @@ import { GrupoDeOpcoes } from '@/components/form/opcoes'
 import { useEnvio } from '@/components/form/use-envio'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { api } from '@/lib/api/cliente'
-import type { Unidade } from '@/lib/api/tipos'
+import { cadastrarUnidade, type TipoDeUnidade } from './unidades-api'
 
-export type TipoDeUnidade = 'hemocentros' | 'hospitais'
+export type { TipoDeUnidade }
 
 interface Valores {
   tipo: TipoDeUnidade
@@ -21,9 +20,29 @@ interface Valores {
   uf: string
   latitude: string
   longitude: string
+  logradouro: string
+  numero: string
+  bairro: string
+  cep: string
 }
 
-const INICIAL: Valores = { tipo: 'hemocentros', nome: '', cidade: '', uf: '', latitude: '', longitude: '' }
+const INICIAL: Valores = {
+  tipo: 'hemocentros',
+  nome: '',
+  cidade: '',
+  uf: '',
+  latitude: '',
+  longitude: '',
+  logradouro: '',
+  numero: '',
+  bairro: '',
+  cep: '',
+}
+
+/** Campo opcional vazio vai como null, nunca como "". */
+function opcional(valor: string): string | null {
+  return valor.trim() || null
+}
 
 /** As regras do UnidadeRequisicao do backend. */
 function validar(valores: Valores): Partial<Record<keyof Valores, string>> {
@@ -59,10 +78,14 @@ export function FormularioDeUnidade({ aoCadastrar }: { aoCadastrar: (tipo: TipoD
 
     const unidade = await envio.executar(
       () =>
-        api.enviar<Unidade>(`/${valores.tipo}`, {
+        cadastrarUnidade(valores.tipo, {
           nome: valores.nome.trim(),
+          logradouro: opcional(valores.logradouro),
+          numero: opcional(valores.numero),
+          bairro: opcional(valores.bairro),
           cidade: valores.cidade.trim(),
           uf: valores.uf.trim().toUpperCase(),
+          cep: opcional(valores.cep),
           latitude: Number(valores.latitude),
           longitude: Number(valores.longitude),
         }),
@@ -154,6 +177,40 @@ export function FormularioDeUnidade({ aoCadastrar }: { aoCadastrar: (tipo: TipoD
           )}
         </Campo>
       </div>
+
+      <details className="group rounded-lg border px-3.5 py-2.5 open:pb-4">
+        <summary className="flex cursor-pointer list-none items-center justify-between text-rotulo font-medium outline-none select-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+          Endereço
+          <span className="text-apoio font-normal text-muted-foreground group-open:hidden">opcional · abrir</span>
+        </summary>
+        <div className="mt-4 grid gap-4">
+          <div className="grid grid-cols-[minmax(0,1fr)_88px] gap-4">
+            <Campo id="logradouro" rotulo="Logradouro" erro={erros.logradouro}>
+              {(props) => <Input {...props} value={valores.logradouro} onChange={(evento) => mudar('logradouro', evento.target.value)} />}
+            </Campo>
+            <Campo id="numero" rotulo="Número" erro={erros.numero}>
+              {(props) => <Input {...props} value={valores.numero} onChange={(evento) => mudar('numero', evento.target.value)} />}
+            </Campo>
+          </div>
+          <div className="grid grid-cols-[minmax(0,1fr)_120px] gap-4">
+            <Campo id="bairro" rotulo="Bairro" erro={erros.bairro}>
+              {(props) => <Input {...props} value={valores.bairro} onChange={(evento) => mudar('bairro', evento.target.value)} />}
+            </Campo>
+            <Campo id="cep" rotulo="CEP" erro={erros.cep}>
+              {(props) => (
+                <Input
+                  {...props}
+                  inputMode="numeric"
+                  value={valores.cep}
+                  placeholder="50000-000"
+                  className="tabular-nums"
+                  onChange={(evento) => mudar('cep', evento.target.value)}
+                />
+              )}
+            </Campo>
+          </div>
+        </div>
+      </details>
 
       {envio.erro && <Alerta tipo="erro" titulo="A API recusou o cadastro">{envio.erro}</Alerta>}
 
