@@ -189,7 +189,7 @@ export function PaginaDeRequisicoes() {
         ))}
       </div>
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid items-start gap-6 2xl:grid-cols-[minmax(0,1fr)_340px]">
         <Card className="overflow-hidden">
           <CardHeader className="pb-4">
             <div>
@@ -263,7 +263,7 @@ export function PaginaDeRequisicoes() {
           />
         </Card>
 
-        <Card className="overflow-hidden xl:sticky xl:top-20">
+        <Card className="overflow-hidden 2xl:sticky 2xl:top-20">
           <CardHeader className="border-b pb-4">
             <div>
               <CardTitle>Fila de atendimento</CardTitle>

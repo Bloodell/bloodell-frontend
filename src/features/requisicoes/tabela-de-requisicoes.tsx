@@ -33,7 +33,12 @@ export function TabelaDeRequisicoes({
     {
       id: 'codigo',
       cabecalho: 'Código',
-      celula: (requisicao) => <span className="font-mono text-rotulo whitespace-nowrap">{requisicao.codigo}</span>,
+      celula: (requisicao) => (
+        <div className="min-w-0">
+          <span className="font-mono text-rotulo whitespace-nowrap">{requisicao.codigo}</span>
+          <p className="truncate text-apoio text-muted-foreground sm:hidden">{requisicao.hospitalNome}</p>
+        </div>
+      ),
       esqueleto: 'w-28',
     },
     {
@@ -42,9 +47,10 @@ export function TabelaDeRequisicoes({
       celula: (requisicao) => (
         <div className="min-w-0">
           <p className="truncate">{requisicao.hospitalNome}</p>
-          <p className="text-apoio text-muted-foreground md:hidden">{dataHora(requisicao.criadaEm)}</p>
+          <p className="text-apoio text-muted-foreground 2xl:hidden">{dataHora(requisicao.criadaEm)}</p>
         </div>
       ),
+      className: 'hidden sm:table-cell',
       esqueleto: 'w-36',
     },
     {
@@ -74,6 +80,7 @@ export function TabelaDeRequisicoes({
       id: 'prioridade',
       cabecalho: 'Prioridade',
       celula: (requisicao) => <Badge tom={tomDaPrioridade(requisicao.prioridade)}>{rotulo(requisicao.prioridade)}</Badge>,
+      className: 'hidden md:table-cell',
       esqueleto: 'w-20',
     },
     {
@@ -90,7 +97,7 @@ export function TabelaDeRequisicoes({
       celula: (requisicao) => (
         <span className="whitespace-nowrap text-muted-foreground">{dataHora(requisicao.criadaEm)}</span>
       ),
-      className: 'hidden md:table-cell',
+      className: 'hidden 2xl:table-cell',
       esqueleto: 'w-24',
     },
     {
@@ -107,7 +114,7 @@ export function TabelaDeRequisicoes({
               onClick={() => aoProcessar(requisicao)}
             >
               {processando !== requisicao.id && <Play />}
-              Processar
+              <span className="sr-only sm:not-sr-only">Processar</span>
             </Button>
           )}
           <Button variant="ghost" size="icon-sm" onClick={() => aoAbrir(requisicao)} aria-label={`Abrir ${requisicao.codigo}`}>
@@ -115,7 +122,7 @@ export function TabelaDeRequisicoes({
           </Button>
         </div>
       ),
-      className: 'w-40 text-right',
+      className: 'w-24 text-right sm:w-40',
       esqueleto: 'ml-auto w-24',
     },
   ]
