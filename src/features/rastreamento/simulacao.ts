@@ -20,6 +20,7 @@ export function entregasSimuladas(): EntregaBase[] {
   const base = {
     simulada: true,
     posicaoReportada: null,
+    posicaoRegistradaEm: null,
     distanciaKm: null,
     tempoEstimadoMin: null,
     iniciadaEm: null,

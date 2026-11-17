@@ -30,8 +30,13 @@ export interface EntregaBase {
   distanciaKm: number | null
   tempoEstimadoMin: number | null
   iniciadaEm: string | null
-  /** Ultima posicao conhecida do veiculo (telemetria), quando a API a informa. */
+  /**
+   * Ultima posicao lida pela TELEMETRIA (historico do veiculo). A coordenada
+   * do cadastro do veiculo nunca entra aqui: ela nao prova onde ele esta.
+   */
   posicaoReportada: Coordenada | null
+  /** Quando essa leitura foi registrada (ISO), para mostrar a idade do dado. */
+  posicaoRegistradaEm: string | null
   simulada: boolean
   /** So na simulacao: quantos segundos o veiculo leva para cumprir a rota. */
   duracaoSimuladaS?: number
@@ -51,6 +56,8 @@ export interface EstadoDoVeiculo {
   rumo: number
   emMovimento: boolean
   fonte: FonteDaPosicao
+  /** Havia leitura de GPS, mas longe da rota: a posicao mostrada e estimativa. */
+  leituraForaDaRotaKm?: number
 }
 
 export const STATUS_ATIVOS: StatusEntrega[] = ['PLANEJADA', 'DESPACHADA', 'EM_TRANSPORTE']
