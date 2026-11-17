@@ -29,7 +29,7 @@ Dois diferenciais, confirmados pelo usuário:
 
 - Frontend Next.js 16 (export estático, `output: 'export'`), React 19, Tailwind 4, componentes no padrão shadcn escritos à mão, Recharts, Sonner. Servido por Nginx na EC2; sem renderização no servidor.
 - Consome o backend (`bloodell-backend`, repositório separado) em `http://127.0.0.1:8080`. Documentação da API em Swagger no mesmo host.
-- Rotas: `/` (visão geral), `/estoque`, `/doacoes`, `/requisicoes`, `/entregas`, `/rastreamento`, `/cadeia-fria`, `/unidades`, `/algoritmos`.
+- Rotas: `/login`, `/` (visão geral), `/estoque`, `/doacoes`, `/requisicoes`, `/entregas`, `/rastreamento`, `/cadeia-fria`, `/unidades`, `/algoritmos`, `/usuarios` (ADMIN).
 - Prioridade de layout: notebook e telão. Mobile existe, mas não é o alvo principal.
 - Demonstração: em desenvolvimento, `POST /api/v1/demonstracoes/cenarios` (semente 42) popula dados sintéticos reproduzíveis.
 
@@ -38,8 +38,11 @@ Dois diferenciais, confirmados pelo usuário:
 - **Dados sintéticos e regras didáticas**: nenhuma informação real de doador ou paciente; as regras de compatibilidade não constituem orientação clínica.
 - **A interface consome a API real; nada é mockado.** Se a API falhou, a tela diz isso, com a mensagem real e "Tentar novamente". Os estados carregando, erro e vazio são sempre tratados. Exceção deliberada: a rota `/design` é uma página de referência de componentes com valores ilustrativos.
 - **Ainda não existem no backend** (Unidade 2): FEFO, matriz de compatibilidade ABO/Rh e geometria de rotas por ruas (o backend só calcula distância em linha reta). A interface não deve desenhá-los com dado inventado.
+- **Bloqueados por regra de backend ainda ausente:** editar unidade (GET sem endereço completo), cancelar após a alocação e cancelar entrega (sem devolução de bolsas ao estoque). A tela explica a limitação no lugar.
 - **Central logística** (`/rastreamento`): mapa 3D com coordenadas reais de unidades e veículos vindas da API. A geometria das ruas vem de um serviço de roteamento externo; sem GPS utilizável a posição é estimada, e a demonstração em movimento é sempre rotulada como SIMULAÇÃO.
-- **Sem login nem sessão de usuário.** A interface se identifica como "demonstração sem autenticação".
+- **Dois modos, fixados no build.** Operação: login obrigatório (JWT só em memória), perfis `OPERADOR_HEMOCENTRO`, `USUARIO_HOSPITAL`, `LOGISTICA` e `ADMIN`, e cada conta vê só as unidades vinculadas (ADMIN é global). Demonstração: sem login, contra backend com autenticação desligada e dados sintéticos.
+- **O backend autoriza.** A interface só esconde o que o backend restringe de fato a ADMIN (usuários e vínculos, cadastro de unidades, diagnóstico da telemetria, cenário sintético).
+- **Simulação no mapa só por escolha explícita, só na demonstração.** API vazia mostra vazio; API com erro mostra erro.
 - **Nenhum estado comunicado só por cor**: ícone e texto sempre acompanham.
 - **Busca de estoque** filtra só a página carregada, pois o backend não tem busca textual entre páginas.
 - **Em aberto**: o usuário ainda precisa de ideias para novas funcionalidades. Nada está decidido além do que o backend já expõe.
