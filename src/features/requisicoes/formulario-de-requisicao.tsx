@@ -1,56 +1,30 @@
 'use client'
 
-import { Minus, Plus, Send } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { Send } from 'lucide-react'
+import { useRef, useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
 import { Alerta } from '@/components/form/alerta'
 import { Campo } from '@/components/form/campo'
 import { GrupoDeOpcoes } from '@/components/form/opcoes'
-import { SeletorDeTipoSanguineo } from '@/components/form/seletor-de-tipo-sanguineo'
 import { useEnvio } from '@/components/form/use-envio'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { api } from '@/lib/api/cliente'
 import type { EstadoDoRecurso } from '@/lib/api/use-recurso'
-import type { Prioridade, Requisicao, TipoComponente, Unidade } from '@/lib/api/tipos'
-import { COMPONENTES, PRIORIDADES } from '@/lib/formatos'
+import type { Prioridade, Requisicao, Unidade } from '@/lib/api/tipos'
+import { PRIORIDADES, plural } from '@/lib/formatos'
 import { cn } from '@/lib/utils'
+import { EditorDeItens } from './editor-de-itens'
+import { criarRequisicao, errosDaApiPorItem, validarItem, type ErrosDoItem, type ItemDoFormulario } from './requisicoes-api'
 
-interface Valores {
-  hospitalId: string
-  prioridade: Prioridade
-  componente: TipoComponente
-  tipoSanguineo: string
-  quantidade: string
-}
-
-const INICIAL: Valores = {
-  hospitalId: '',
-  prioridade: 'URGENTE',
-  componente: 'CONCENTRADO_HEMACIAS',
-  tipoSanguineo: 'O+',
-  quantidade: '1',
-}
-
-const COR_DA_PRIORIDADE: Record<Prioridade, string> = {
+export const COR_DA_PRIORIDADE: Record<Prioridade, string> = {
   EMERGENCIA: 'bg-critico',
   URGENTE: 'bg-atencao',
   ELETIVA: 'bg-muted-foreground',
 }
 
-function validar(valores: Valores): Partial<Record<keyof Valores, string>> {
-  const erros: Partial<Record<keyof Valores, string>> = {}
-  const quantidade = Number(valores.quantidade)
-  if (!valores.hospitalId) erros.hospitalId = 'Escolha o hospital solicitante.'
-  if (!Number.isInteger(quantidade) || quantidade < 1) erros.quantidade = 'A quantidade deve ser pelo menos 1 bolsa.'
-  return erros
-}
-
-/** "itens[0].quantidade" (nome do campo no backend) vira "quantidade". */
-function errosDoFormulario(errosDaApi: Record<string, string>) {
-  return Object.fromEntries(Object.entries(errosDaApi).map(([campo, mensagem]) => [campo.replace(/^itens\[\d+\]\./, ''), mensagem]))
+function itemNovo(chave: number): ItemDoFormulario {
+  return { chave, componente: 'CONCENTRADO_HEMACIAS', tipoSanguineo: 'O+', quantidade: '1' }
 }
 
 export function FormularioDeRequisicao({
@@ -60,34 +34,60 @@ export function FormularioDeRequisicao({
   hospitais: EstadoDoRecurso<Unidade[]>
   aoCriar: (requisicao: Requisicao) => void
 }) {
-  const [valores, setValores] = useState<Valores>(INICIAL)
+  const proximaChave = useRef(1)
+  const [hospitalEscolhido, setHospitalId] = useState('')
+  const [prioridade, setPrioridade] = useState<Prioridade>('URGENTE')
+  const [itens, setItens] = useState<ItemDoFormulario[]>(() => [itemNovo(0)])
   const [tentouEnviar, setTentouEnviar] = useState(false)
+  const [chavesNoEnvio, setChavesNoEnvio] = useState<number[]>([])
   const envio = useEnvio()
 
-  const errosDaApi = errosDoFormulario(envio.errosDaApi)
-  const erros: Partial<Record<string, string>> = tentouEnviar ? { ...validar(valores), ...errosDaApi } : errosDaApi
+  const lista = hospitais.dados ?? []
+  // Conta vinculada a um so hospital: ja vem escolhido.
+  const hospitalId = hospitalEscolhido || (lista.length === 1 ? String(lista[0].id) : '')
 
-  function mudar<K extends keyof Valores>(campo: K, valor: Valores[K]) {
-    setValores((atuais) => ({ ...atuais, [campo]: valor }))
+  const daApi = errosDaApiPorItem(envio.errosDaApi, chavesNoEnvio)
+  const errosDosItens: Record<number, ErrosDoItem> = {}
+  for (const item of itens) {
+    const locais = tentouEnviar ? validarItem(item) : {}
+    const remotos = daApi.porItem[item.chave] ?? {}
+    if (Object.keys(locais).length || Object.keys(remotos).length) errosDosItens[item.chave] = { ...locais, ...remotos }
+  }
+  const erroDoHospital = daApi.gerais.hospitalId ?? (tentouEnviar && !hospitalId ? 'Escolha o hospital solicitante.' : undefined)
+  const erroDaPrioridade = daApi.gerais.prioridade
+  const erroDaLista = daApi.gerais.itens
+
+  const totalDeBolsas = itens.reduce((soma, item) => soma + (Number(item.quantidade) || 0), 0)
+
+  function mudarItem(chave: number, mudanca: Partial<ItemDoFormulario>) {
+    setItens((atuais) => atuais.map((item) => (item.chave === chave ? { ...item, ...mudanca } : item)))
   }
 
-  function ajustarQuantidade(delta: number) {
-    mudar('quantidade', String(Math.max(1, (Number(valores.quantidade) || 0) + delta)))
+  function adicionarItem() {
+    setItens((atuais) => [...atuais, itemNovo(proximaChave.current++)])
+  }
+
+  function removerItem(chave: number) {
+    setItens((atuais) => (atuais.length > 1 ? atuais.filter((item) => item.chave !== chave) : atuais))
   }
 
   async function enviar(evento: FormEvent) {
     evento.preventDefault()
     setTentouEnviar(true)
-    if (Object.keys(validar(valores)).length > 0) return
+    const invalido = !hospitalId || itens.length === 0 || itens.some((item) => Object.keys(validarItem(item)).length > 0)
+    if (invalido) return
 
+    setChavesNoEnvio(itens.map((item) => item.chave))
     const requisicao = await envio.executar(
       () =>
-        api.enviar<Requisicao>('/requisicoes', {
-          hospitalId: Number(valores.hospitalId),
-          prioridade: valores.prioridade,
-          itens: [
-            { componente: valores.componente, tipoSanguineo: valores.tipoSanguineo, quantidade: Number(valores.quantidade) },
-          ],
+        criarRequisicao({
+          hospitalId: Number(hospitalId),
+          prioridade,
+          itens: itens.map((item) => ({
+            componente: item.componente,
+            tipoSanguineo: item.tipoSanguineo,
+            quantidade: Number(item.quantidade),
+          })),
         }),
       'Não foi possível criar a requisição.',
     )
@@ -97,15 +97,16 @@ export function FormularioDeRequisicao({
         description: 'A posição na fila depende da prioridade e da ordem de chegada.',
       })
       aoCriar(requisicao)
-      setValores({ ...INICIAL, hospitalId: valores.hospitalId })
+      setItens([itemNovo(proximaChave.current++)])
+      setPrioridade('URGENTE')
       setTentouEnviar(false)
     }
   }
 
-  if (hospitais.carregando) {
+  if (hospitais.carregando && !hospitais.dados) {
     return (
       <div className="space-y-6">
-        {[0, 1, 2, 3].map((indice) => (
+        {[0, 1, 2].map((indice) => (
           <div key={indice} className="space-y-2">
             <Skeleton className="h-3.5 w-24" />
             <Skeleton className="h-9 w-full" />
@@ -126,13 +127,21 @@ export function FormularioDeRequisicao({
     )
   }
 
+  if (lista.length === 0) {
+    return (
+      <Alerta tipo="info" titulo="Nenhum hospital disponível para sua conta">
+        Para pedir hemocomponentes, a conta precisa estar vinculada a um hospital. Fale com o administrador da rede.
+      </Alerta>
+    )
+  }
+
   return (
     <form onSubmit={enviar} noValidate className="space-y-6">
-      <Campo id="hospital" rotulo="Hospital solicitante" erro={erros.hospitalId}>
+      <Campo id="hospital" rotulo="Hospital solicitante" erro={erroDoHospital}>
         {(props) => (
-          <Select {...props} value={valores.hospitalId} onChange={(evento) => mudar('hospitalId', evento.target.value)}>
+          <Select {...props} value={hospitalId} onChange={(evento) => setHospitalId(evento.target.value)}>
             <option value="">Selecione o hospital</option>
-            {(hospitais.dados ?? []).map((unidade) => (
+            {lista.map((unidade) => (
               <option key={unidade.id} value={unidade.id}>
                 {unidade.nome} · {unidade.cidade}/{unidade.uf}
               </option>
@@ -144,15 +153,15 @@ export function FormularioDeRequisicao({
       <Campo
         id="prioridade"
         rotulo="Prioridade"
-        ajuda={PRIORIDADES.find((opcao) => opcao.valor === valores.prioridade)?.descricao}
-        erro={erros.prioridade}
+        ajuda={PRIORIDADES.find((opcao) => opcao.valor === prioridade)?.descricao}
+        erro={erroDaPrioridade}
       >
         {() => (
           <GrupoDeOpcoes
             nome="prioridade"
             rotulo="Prioridade"
-            valor={valores.prioridade}
-            aoMudar={(prioridade) => mudar('prioridade', prioridade)}
+            valor={prioridade}
+            aoMudar={setPrioridade}
             opcoes={PRIORIDADES.map((opcao) => ({
               valor: opcao.valor,
               rotulo: opcao.rotulo,
@@ -162,74 +171,20 @@ export function FormularioDeRequisicao({
         )}
       </Campo>
 
-      <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_140px]">
-        <Campo id="componente" rotulo="Hemocomponente" erro={erros.componente}>
-          {(props) => (
-            <Select
-              {...props}
-              value={valores.componente}
-              onChange={(evento) => mudar('componente', evento.target.value as TipoComponente)}
-            >
-              {COMPONENTES.map((opcao) => (
-                <option key={opcao.valor} value={opcao.valor}>
-                  {opcao.rotulo}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Campo>
-
-        <Campo id="quantidade" rotulo="Quantidade" erro={erros.quantidade}>
-          {(props) => (
-            <div className="flex">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="rounded-r-none border-r-0"
-                onClick={() => ajustarQuantidade(-1)}
-                aria-label="Diminuir quantidade"
-              >
-                <Minus />
-              </Button>
-              <Input
-                {...props}
-                type="number"
-                inputMode="numeric"
-                min={1}
-                value={valores.quantidade}
-                onChange={(evento) => mudar('quantidade', evento.target.value)}
-                className="rounded-none text-center tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="rounded-l-none border-l-0"
-                onClick={() => ajustarQuantidade(1)}
-                aria-label="Aumentar quantidade"
-              >
-                <Plus />
-              </Button>
-            </div>
-          )}
-        </Campo>
-      </div>
-
-      <Campo id="tipo-solicitado" rotulo="Tipo sanguíneo" erro={erros.tipoSanguineo}>
-        {(props) => (
-          <SeletorDeTipoSanguineo
-            id={props.id}
-            nome="tipoSolicitado"
-            valor={valores.tipoSanguineo}
-            aoMudar={(tipo) => mudar('tipoSanguineo', tipo)}
-          />
-        )}
-      </Campo>
+      <fieldset className="space-y-3">
+        <legend className="mb-2 flex w-full items-baseline justify-between gap-3 text-rotulo font-medium">
+          O que o hospital precisa
+          <span className="text-apoio font-normal text-muted-foreground tabular-nums">
+            {plural(itens.length, 'item', 'itens')} · {plural(totalDeBolsas, 'bolsa')}
+          </span>
+        </legend>
+        <EditorDeItens itens={itens} erros={errosDosItens} aoMudar={mudarItem} aoAdicionar={adicionarItem} aoRemover={removerItem} />
+        {erroDaLista && <p className="text-apoio text-critico">{erroDaLista}</p>}
+      </fieldset>
 
       {envio.erro && <Alerta tipo="erro" titulo="A API recusou a requisição">{envio.erro}</Alerta>}
 
-      <Button type="submit" className="w-full" carregando={envio.enviando}>
+      <Button type="submit" size="lg" className="w-full" carregando={envio.enviando}>
         {!envio.enviando && <Send />}
         {envio.enviando ? 'Enviando…' : 'Criar requisição'}
       </Button>
