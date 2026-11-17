@@ -8,6 +8,7 @@ import {
   Network,
   Thermometer,
   Truck,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -15,6 +16,8 @@ export interface ItemDeNavegacao {
   caminho: string
   rotulo: string
   icone: LucideIcon
+  /** Mostrado so a quem pode usar (o backend continua sendo quem autoriza). */
+  restricao?: 'gerenciar-usuarios'
 }
 
 export const GRUPOS_DE_NAVEGACAO: { titulo: string; itens: ItemDeNavegacao[] }[] = [
@@ -41,6 +44,10 @@ export const GRUPOS_DE_NAVEGACAO: { titulo: string; itens: ItemDeNavegacao[] }[]
       { caminho: '/unidades', rotulo: 'Unidades', icone: Building2 },
       { caminho: '/algoritmos', rotulo: 'Estruturas (AED)', icone: Network },
     ],
+  },
+  {
+    titulo: 'Administração',
+    itens: [{ caminho: '/usuarios', rotulo: 'Usuários', icone: UsersRound, restricao: 'gerenciar-usuarios' }],
   },
 ]
 

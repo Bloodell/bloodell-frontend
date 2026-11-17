@@ -215,6 +215,22 @@
   }
 }
 
+/* Entrega percorrendo a rota no painel do login (offset-path). */
+@keyframes percurso {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  8%,
+  88% {
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
 @keyframes gaveta-in {
   from {
     transform: translateX(-100%);

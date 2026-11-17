@@ -3,8 +3,7 @@ import { Instrument_Sans, JetBrains_Mono } from 'next/font/google'
 import type { ReactNode } from 'react'
 import { Toaster } from 'sonner'
 import { SCRIPT_DO_TEMA } from '@/components/layout/alternar-tema'
-import { BarraSuperior } from '@/components/layout/barra-superior'
-import { Lateral } from '@/components/layout/lateral'
+import { EstruturaDaAplicacao } from '@/components/layout/estrutura-da-aplicacao'
 import './globals.css'
 
 // Interface em Instrument Sans; dados (codigos, lotes, graus, quantidades) em
@@ -37,13 +36,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           Pular para o conteúdo
         </a>
-        <Lateral />
-        <div className="lg:pl-60">
-          <BarraSuperior />
-          <main id="conteudo" className="mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
-            {children}
-          </main>
-        </div>
+        <EstruturaDaAplicacao>{children}</EstruturaDaAplicacao>
         <Toaster
           position="bottom-right"
           toastOptions={{
