@@ -184,6 +184,12 @@
 
   --animate-entrar: entrar 220ms cubic-bezier(0.22, 1, 0.36, 1);
 
+  /* Rede isometrica do login: predio sobe, rota se traca, destino acende, emblema flutua. */
+  --animate-erguer: erguer 600ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-tracar: tracar 700ms cubic-bezier(0.77, 0, 0.175, 1) both;
+  --animate-chegada: chegada 900ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-flutuar: flutuar 2600ms cubic-bezier(0.77, 0, 0.175, 1) infinite alternate;
+
   @keyframes entrar {
     from {
       opacity: 0;
@@ -212,6 +218,44 @@
 @keyframes sheet-in {
   from {
     transform: translateX(100%);
+  }
+}
+
+@keyframes erguer {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+/* Com pathLength=1 e dasharray "1 1": offset 1 = nada desenhado, 0 = rota inteira. */
+@keyframes tracar {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Comeca invisivel: durante o atraso (fill "both") o anel nao pode aparecer. */
+@keyframes chegada {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  12% {
+    opacity: 0.9;
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+
+@keyframes flutuar {
+  to {
+    transform: translateY(-3px);
   }
 }
 
