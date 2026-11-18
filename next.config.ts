@@ -8,8 +8,11 @@ import type { NextConfig } from 'next'
 const emDesenvolvimento = process.env.NODE_ENV === 'development'
 const backendLocal = process.env.BACKEND_URL ?? 'http://127.0.0.1:8080'
 
+const experimental: NextConfig['experimental'] = { agentUpgrade: 'security' }
+
 const configuracao: NextConfig = emDesenvolvimento
   ? {
+      experimental,
       async rewrites() {
         return ['/api/:caminho*', '/swagger-ui.html', '/swagger-ui/:caminho*', '/v3/:caminho*'].map((source) => ({
           source,
@@ -18,6 +21,7 @@ const configuracao: NextConfig = emDesenvolvimento
       },
     }
   : {
+      experimental,
       output: 'export',
       trailingSlash: true,
       images: { unoptimized: true },
