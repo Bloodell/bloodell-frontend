@@ -188,6 +188,8 @@
   --animate-erguer: erguer 600ms cubic-bezier(0.23, 1, 0.32, 1) both;
   --animate-tracar: tracar 700ms cubic-bezier(0.77, 0, 0.175, 1) both;
   --animate-chegada: chegada 900ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-brilho: brilho 900ms ease both;
+  --animate-esmaecer: fade-in 500ms ease both;
   --animate-flutuar: flutuar 2600ms cubic-bezier(0.77, 0, 0.175, 1) infinite alternate;
 
   @keyframes entrar {
@@ -253,6 +255,19 @@
   }
 }
 
+/* Variante de movimento reduzido: o destino acende so por brilho, sem crescer. */
+@keyframes brilho {
+  from {
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 @keyframes flutuar {
   to {
     transform: translateY(-3px);
@@ -312,8 +327,13 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /*
+   * Movimento reduzido = menos e mais suave, nao zero. Elementos marcados com
+   * data-movimento-essencial tem uma variante propria, sem deslocamento (so
+   * opacidade/traco), e ficam fora deste corte.
+   */
   @media (prefers-reduced-motion: reduce) {
-    *,
+    *:not([data-movimento-essencial]),
     *::before,
     *::after {
       animation-duration: 0.01ms !important;

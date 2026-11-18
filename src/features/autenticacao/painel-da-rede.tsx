@@ -6,8 +6,9 @@ import type { CSSProperties } from 'react'
  * lateral; sem foto, desenha a rede em isometria: hemocentros (predios com a
  * gota da marca) e hospitais (predios com a cruz). A rede se forma na
  * entrada -- predios sobem, rotas se tracam ligando uma unidade a outra -- e
- * depois as entregas circulam. Com prefers-reduced-motion, a rede aparece
- * pronta e parada (todas as animacoes estao atras de `motion-safe:`).
+ * depois as entregas circulam. Com prefers-reduced-motion fica a parte que
+ * explica a rede, sem deslocamento: rotas se tracam, predios esmaecem e o
+ * destino acende so por brilho; entregas e flutuacao param.
  */
 
 // --- Projecao isometrica ------------------------------------------------------
@@ -145,7 +146,11 @@ function PredioIsometrico({ predio, ordem }: { predio: Predio; ordem: number }) 
   const [cx, cy] = iso(x + l / 2, y + p / 2, a)
 
   return (
-    <g className="motion-safe:animate-erguer" style={atraso(INICIO_DOS_PREDIOS + ordem * INTERVALO_DOS_PREDIOS)}>
+    <g
+      data-movimento-essencial
+      className="motion-safe:animate-erguer motion-reduce:animate-esmaecer"
+      style={atraso(INICIO_DOS_PREDIOS + ordem * INTERVALO_DOS_PREDIOS)}
+    >
       <polygon points={pontos(sombra)} fill="var(--sidebar)" opacity="0.55" />
       <polygon points={pontos(esquerda)} fill={cor.esquerda} />
       <polygon points={pontos(direita)} fill={cor.direita} />
@@ -223,7 +228,8 @@ function RedeIsometrica() {
             strokeLinejoin="round"
             strokeLinecap="round"
             strokeDasharray="1 1"
-            className="motion-safe:animate-tracar"
+            data-movimento-essencial
+            className="animate-tracar"
             style={atraso(rota.inicio)}
           />
           {/* Pulso de chegada: a unidade de destino "acende" quando a rota a alcanca. */}
@@ -236,7 +242,8 @@ function RedeIsometrica() {
             stroke="var(--sidebar-indicator)"
             strokeWidth="1.5"
             opacity="0"
-            className="origin-center [transform-box:fill-box] motion-safe:animate-chegada"
+            data-movimento-essencial
+            className="origin-center [transform-box:fill-box] motion-safe:animate-chegada motion-reduce:animate-brilho"
             style={atraso(rota.fim - 120)}
           />
         </g>
@@ -252,7 +259,8 @@ function RedeIsometrica() {
             fill="#f4f1ff"
             stroke="var(--sidebar-indicator)"
             strokeWidth="2.5"
-            className="motion-safe:animate-[percurso_4200ms_linear_infinite_both]"
+            data-movimento-essencial
+            className="motion-safe:animate-[percurso_4200ms_linear_infinite_both] motion-reduce:animate-esmaecer"
             style={{
               offsetPath: `path('${rota.caminho}')`,
               offsetDistance: '55%',
