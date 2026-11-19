@@ -186,9 +186,14 @@
 
   /* Rede isometrica do login: predio sobe, rota se traca, destino acende, emblema flutua. */
   --animate-erguer: erguer 600ms cubic-bezier(0.23, 1, 0.32, 1) both;
-  --animate-tracar: tracar 700ms cubic-bezier(0.77, 0, 0.175, 1) both;
-  --animate-chegada: chegada 900ms cubic-bezier(0.23, 1, 0.32, 1) both;
-  --animate-brilho: brilho 900ms ease both;
+  /*
+   * Ciclo da rede: 10 s, igual para rota, chegada e brilho. Como todos tem o
+   * mesmo periodo, o atraso de cada elemento mantem a ordem em toda volta: as
+   * rotas se tracam em sequencia, ficam acesas, escorrem e se tracam de novo.
+   */
+  --animate-tracar: tracar 10s linear infinite both;
+  --animate-chegada: chegada 10s linear infinite both;
+  --animate-brilho: brilho 10s linear infinite both;
   --animate-esmaecer: fade-in 500ms ease both;
   --animate-flutuar: flutuar 2600ms cubic-bezier(0.77, 0, 0.175, 1) infinite alternate;
 
@@ -230,26 +235,43 @@
   }
 }
 
-/* Com pathLength=1 e dasharray "1 1": offset 1 = nada desenhado, 0 = rota inteira. */
+/*
+ * Com pathLength=1 e dasharray "1 1": offset 1 = nada desenhado, 0 = rota
+ * inteira, -1 = apagada a partir da origem (a rota "escorre" para o destino).
+ * Em 10 s: traca em 0,7 s, fica acesa, escorre em 0,8 s e espera 2 s vazia.
+ */
 @keyframes tracar {
-  from {
+  0% {
     stroke-dashoffset: 1;
+    animation-timing-function: cubic-bezier(0.77, 0, 0.175, 1);
   }
-  to {
+  7%,
+  72% {
     stroke-dashoffset: 0;
+    animation-timing-function: cubic-bezier(0.77, 0, 0.175, 1);
+  }
+  80%,
+  100% {
+    stroke-dashoffset: -1;
   }
 }
 
-/* Comeca invisivel: durante o atraso (fill "both") o anel nao pode aparecer. */
+/*
+ * Pulso no destino nos primeiros 0,9 s de cada ciclo; invisivel no resto
+ * (inclusive durante o atraso inicial, por causa do fill "both").
+ */
 @keyframes chegada {
-  from {
+  0% {
     opacity: 0;
     transform: scale(0.6);
+    animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
   }
-  12% {
+  1% {
     opacity: 0.9;
+    animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
   }
-  to {
+  9%,
+  100% {
     opacity: 0;
     transform: scale(1.9);
   }
@@ -257,13 +279,14 @@
 
 /* Variante de movimento reduzido: o destino acende so por brilho, sem crescer. */
 @keyframes brilho {
-  from {
+  0% {
     opacity: 0;
   }
-  30% {
+  3% {
     opacity: 0.9;
   }
-  to {
+  9%,
+  100% {
     opacity: 0;
   }
 }
