@@ -47,6 +47,7 @@ const ROTULOS: Record<string, string> = {
   CANCELADA: 'Cancelada',
   PLANEJADA: 'Planejada',
   EM_MANUTENCAO: 'Em manutenção',
+  MANUTENCAO: 'Em manutenção',
   CRITICO: 'Crítico',
   ATENCAO: 'Atenção',
   HEMOCENTRO: 'Hemocentro',
@@ -102,6 +103,19 @@ export function tomDoStatusDaRequisicao(status: string): Tom {
     case 'REJEITADA':
     case 'CANCELADA':
       return 'erro'
+    default:
+      return 'neutro'
+  }
+}
+
+export function tomDoVeiculo(status: string): Tom {
+  switch (status) {
+    case 'DISPONIVEL':
+      return 'sucesso'
+    case 'EM_ROTA':
+      return 'frio'
+    case 'MANUTENCAO':
+      return 'atencao'
     default:
       return 'neutro'
   }

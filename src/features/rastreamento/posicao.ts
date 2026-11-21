@@ -14,9 +14,14 @@ export function tempoPrevistoMin(entrega: EntregaNoMapa): number {
 /** Onde o veiculo esta agora e de onde vem essa informacao. */
 export function estadoDoVeiculo(entrega: EntregaNoMapa, agora: number): EstadoDoVeiculo {
   const { trajeto } = entrega
-  const noPonto = (progresso: number, emMovimento: boolean, fonte: EstadoDoVeiculo['fonte']): EstadoDoVeiculo => {
+  const noPonto = (
+    progresso: number,
+    emMovimento: boolean,
+    fonte: EstadoDoVeiculo['fonte'],
+    leituraForaDaRotaKm?: number,
+  ): EstadoDoVeiculo => {
     const { coordenada, rumo } = trajeto.pontoEm(progresso)
-    return { progresso, coordenada, rumo, emMovimento, fonte }
+    return { progresso, coordenada, rumo, emMovimento, fonte, leituraForaDaRotaKm }
   }
 
   if (entrega.simulada) {
@@ -25,20 +30,21 @@ export function estadoDoVeiculo(entrega: EntregaNoMapa, agora: number): EstadoDo
     return noPonto(ciclo, true, 'simulacao')
   }
 
-  if (entrega.status !== 'EM_TRANSPORTE') {
-    return noPonto(0, false, entrega.posicaoReportada ? 'telemetria' : 'estimada')
-  }
+  // Antes de sair, o veiculo e desenhado na origem: e uma suposicao, nao GPS.
+  if (entrega.status !== 'EM_TRANSPORTE') return noPonto(0, false, 'estimada')
 
+  let foraDaRota: number | undefined
   if (entrega.posicaoReportada) {
     const { fracao, desvioKm } = trajeto.projetar(entrega.posicaoReportada)
     if (desvioKm <= DESVIO_MAXIMO_KM) return noPonto(fracao, true, 'telemetria')
+    foraDaRota = desvioKm
   }
 
   // Sem GPS utilizavel: estima pelo horario de inicio e pelo tempo previsto.
   const inicio = entrega.iniciadaEm ? Date.parse(entrega.iniciadaEm) : NaN
   const previsto = tempoPrevistoMin(entrega) * 60_000
   const progresso = Number.isFinite(inicio) ? Math.min(0.98, Math.max(0, (agora - inicio) / previsto)) : 0
-  return noPonto(progresso, true, 'estimada')
+  return noPonto(progresso, true, 'estimada', foraDaRota)
 }
 
 /** Minutos ate a chegada, ou null quando nao ha como calcular. */

@@ -23,12 +23,16 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { api, mensagemDeErro } from '@/lib/api/cliente'
+import { api, mensagemDeErro, statusDaFalha } from '@/lib/api/cliente'
+import { EM_DEMONSTRACAO } from '@/lib/ambiente'
 import { useRecurso } from '@/lib/api/use-recurso'
 import type { Alerta, Entrega, IndicadorDeDemanda, IndicadorDeEstoque, IndicadorDeTempos } from '@/lib/api/tipos'
 import { numero, rotulo, tomDaEntrega } from '@/lib/formatos'
 import { DemandaPorPrioridade } from './demanda-por-prioridade'
+import { useSessao } from '../autenticacao/provedor-de-sessao'
+import { podeAdministrarRede } from '../autenticacao/sessao'
 import { GraficoPorTipo } from './grafico-por-tipo'
+import { IndicadoresComplementares } from './indicadores-complementares'
 
 const ATALHOS = [
   { caminho: '/doacoes', rotulo: 'Registrar doação', descricao: 'Gera bolsas no estoque', icone: Droplet },
@@ -36,10 +40,12 @@ const ATALHOS = [
   { caminho: '/estoque', rotulo: 'Consultar estoque', descricao: 'Bolsas e validade', icone: Boxes },
 ]
 
-// O cenario de demonstracao so existe com o perfil de demo do backend.
-const PODE_CRIAR_CENARIO = process.env.NODE_ENV === 'development'
-
 export function PaginaDoPainel() {
+  const { usuario, demonstracao } = useSessao()
+  // O cenario sintetico so existe no build de demonstracao, contra um backend
+  // com a demonstracao habilitada e o banco vazio. Nunca no banco operacional.
+  const podeCriarCenario = EM_DEMONSTRACAO && podeAdministrarRede(usuario, demonstracao)
+  const administra = podeAdministrarRede(usuario, demonstracao)
   const estoque = useRecurso<IndicadorDeEstoque>('/indicadores/estoque')
   const demanda = useRecurso<IndicadorDeDemanda>('/indicadores/demanda')
   const tempos = useRecurso<IndicadorDeTempos>('/indicadores/tempos')
@@ -64,8 +70,14 @@ export function PaginaDoPainel() {
       toast.success('Cenário sintético criado', { description: 'Semente 42: os dados são sempre os mesmos.' })
       recarregarTudo()
     } catch (falha) {
+      const status = statusDaFalha(falha)
       toast.error('Não foi possível criar o cenário', {
-        description: mensagemDeErro(falha, 'Confira se a demonstração está habilitada no backend.'),
+        description:
+          status === 409
+            ? 'O banco já tem unidades: o cenário só é criado num banco vazio.'
+            : status === 422
+              ? 'A demonstração está desligada neste backend.'
+              : mensagemDeErro(falha, 'Confira se a demonstração está habilitada no backend.'),
       })
     } finally {
       setCriandoCenario(false)
@@ -124,13 +136,21 @@ export function PaginaDoPainel() {
           <EstadoVazio
             icone={Sparkles}
             titulo="A rede ainda não tem dados"
-            descricao="Cadastre unidades e registre uma doação para começar. Em desenvolvimento, dá para gerar um cenário sintético completo."
+            descricao={
+              administra
+                ? podeCriarCenario
+                  ? 'Cadastre unidades e registre uma doação, ou gere o cenário sintético da aula (semente 42).'
+                  : 'Cadastre unidades e registre uma doação para começar.'
+                : 'Ou a rede ainda está vazia, ou sua conta não está vinculada a nenhuma unidade. Fale com o administrador.'
+            }
             acao={
               <div className="flex flex-wrap justify-center gap-2">
-                <Link href="/unidades" className="text-sm font-medium underline-offset-4 hover:underline">
-                  Cadastrar unidades
-                </Link>
-                {PODE_CRIAR_CENARIO && (
+                {administra && (
+                  <Link href="/unidades" className="text-sm font-medium underline-offset-4 hover:underline">
+                    Cadastrar unidades
+                  </Link>
+                )}
+                {podeCriarCenario && (
                   <Button size="sm" variant="outline" carregando={criandoCenario} onClick={criarCenario}>
                     {!criandoCenario && <Sparkles />}
                     Criar cenário sintético
@@ -188,6 +208,8 @@ export function PaginaDoPainel() {
           </CardContent>
         </Card>
       </div>
+
+      <IndicadoresComplementares estoque={estoque.dados} demanda={demanda.dados} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="overflow-hidden">

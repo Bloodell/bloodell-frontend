@@ -1,11 +1,12 @@
 'use client'
 
-import { ChevronDown, ChevronUp, Compass, Layers, LocateFixed, MapPinOff, Minus, Plus, RotateCw } from 'lucide-react'
+import { AlertTriangle, ChevronDown, ChevronUp, Compass, Layers, LocateFixed, MapPinOff, Minus, Plus, RotateCw } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { useSessao } from '../autenticacao/provedor-de-sessao'
 import { suportaWebgl, useMovimentoReduzido, useTemaDoMapa } from './ambiente'
 import type { ComandosDoMapa } from './mapa-logistico'
 import type { EstadoDoVeiculo } from './modelo'
@@ -29,9 +30,11 @@ function BotaoDoMapa({ rotulo, onClick, children }: { rotulo: string; onClick: (
 
 /** Central logistica: mapa 3D com as entregas em andamento, painéis flutuantes e detalhes por entrega. */
 export function PaginaDeRastreamento() {
-  const [forcarSimulacao, setForcarSimulacao] = useState(false)
-  const rastreamento = useRastreamento(forcarSimulacao)
-  const { entregas, modo, motivoDaSimulacao, carregando } = rastreamento
+  const { demonstracao } = useSessao()
+  // Simulacao so por escolha explicita, e so no build de demonstracao.
+  const [simulacao, setSimulacao] = useState(false)
+  const rastreamento = useRastreamento(demonstracao && simulacao)
+  const { entregas, modo, carregando, erro, statusDoErro, semLocal, atualizadoEm } = rastreamento
 
   const [selecionadaId, setSelecionadaId] = useState<string | null>(null)
   const [seguir, setSeguir] = useState(false)
@@ -98,7 +101,7 @@ export function PaginaDeRastreamento() {
         />
       )}
 
-      {(carregando || (!semMapa && !mapaPronto)) && !semMapa && (
+      {(carregando || (!semMapa && !mapaPronto)) && !semMapa && !erro && (
         <div role="status" className="absolute inset-0 z-10 grid place-items-center bg-muted/80">
           <p className="rounded-lg border bg-card px-4 py-2.5 text-rotulo shadow-lg">Carregando o mapa e as rotas…</p>
         </div>
@@ -149,20 +152,51 @@ export function PaginaDeRastreamento() {
                 </span>
               )}
             </div>
-            {modo === 'simulacao' && motivoDaSimulacao && (
-              <p className="mt-2 text-apoio text-muted-foreground">{motivoDaSimulacao} Exibindo uma rede fictícia.</p>
+
+            {modo === 'api' && erro && (
+              <div role="alert" className="mt-3 flex gap-2 rounded-lg border border-critico/30 bg-critico-suave p-2.5 text-apoio">
+                <AlertTriangle className="mt-px size-3.5 shrink-0 text-critico" aria-hidden="true" />
+                <span>
+                  <span className="font-medium">
+                    {statusDoErro === 403 ? 'Sem permissão para ver as entregas.' : 'Não foi possível consultar a API.'}
+                  </span>{' '}
+                  {statusDoErro === 403 ? 'Peça ao administrador para vincular sua conta às unidades.' : erro}
+                </span>
+              </div>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-3 w-full"
-              onClick={() => {
-                selecionar(null)
-                setForcarSimulacao((valor) => !valor)
-              }}
-            >
-              {modo === 'simulacao' && forcarSimulacao ? 'Voltar aos dados da API' : modo === 'api' ? 'Ver simulação' : 'Tentar dados da API'}
-            </Button>
+            {modo === 'api' && semLocal.length > 0 && (
+              <p className="mt-2 text-apoio text-atencao">
+                {semLocal.length === 1 ? 'A entrega' : 'As entregas'} {semLocal.join(', ')} não aparece(m) no mapa: falta
+                a coordenada de origem ou de destino.
+              </p>
+            )}
+
+            <div className="mt-3 flex gap-2">
+              {modo === 'api' && (
+                <Button variant="outline" size="sm" className="flex-1" onClick={rastreamento.recarregar} carregando={carregando && !erro}>
+                  {!(carregando && !erro) && <RotateCw />}
+                  {erro ? 'Tentar novamente' : 'Atualizar'}
+                </Button>
+              )}
+              {demonstracao && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    selecionar(null)
+                    setSimulacao((valor) => !valor)
+                  }}
+                >
+                  {modo === 'simulacao' ? 'Voltar aos dados da API' : 'Ver simulação'}
+                </Button>
+              )}
+            </div>
+            {modo === 'api' && atualizadoEm !== null && !erro && (
+              <p className="mt-2 text-apoio text-muted-foreground tabular-nums">
+                Atualizado às {new Date(atualizadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </p>
+            )}
           </header>
 
           <section className={cn(classePainel, 'pointer-events-auto flex min-h-0 flex-col overflow-hidden')}>
@@ -182,7 +216,13 @@ export function PaginaDeRastreamento() {
                 {entregas.length ? (
                   <ListaDeEntregas entregas={entregas} estados={estados} selecionadaId={selecionada?.id ?? null} aoSelecionar={selecionar} />
                 ) : (
-                  <p className="p-4 text-rotulo text-muted-foreground">Nenhuma entrega em andamento.</p>
+                  <p className="p-4 text-rotulo text-muted-foreground">
+                    {carregando
+                      ? 'Consultando as entregas…'
+                      : erro
+                        ? 'Lista indisponível enquanto a API não responder.'
+                        : 'Nenhuma entrega em andamento. Entregas planejadas, despachadas ou em transporte aparecem aqui.'}
+                  </p>
                 )}
               </div>
             )}

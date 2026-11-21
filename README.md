@@ -41,18 +41,54 @@ npm run dev
 
 Abra `http://127.0.0.1:5173`.
 
-Se o banco estiver vazio, clique em **Criar cenário sintético** na Visão geral
-(só aparece em desenvolvimento): isso chama `POST /api/v1/demonstracoes/cenarios`
-com a semente 42 e popula o sistema com dados sintéticos reproduzíveis.
+### Dois modos: operação e demonstração
+
+O modo é fixado no build por `NEXT_PUBLIC_MODO_APLICACAO`. Erro, 401 ou API fora
+do ar **nunca** trocam o modo.
+
+| | `operacao` (padrão) | `demonstracao` |
+|---|---|---|
+| Backend | autenticação ligada (`BLOODELL_AUTH_HABILITADA=true`, sempre em `prod`) | autenticação desligada, dados sintéticos |
+| Login | obrigatório em toda tela (`/login`) | não existe |
+| Usuários e vínculos | `/usuarios`, só ADMIN | não existe (o backend nega) |
+| Simulação no mapa | não existe | só quando a pessoa clica em "Ver simulação" |
+| Cenário sintético (semente 42) | não existe | botão na Visão geral, com o banco vazio |
+
+Para rodar contra o backend local com autenticação, suba-o com
+`BLOODELL_AUTH_HABILITADA=true`, um segredo JWT e o admin inicial
+(`BLOODELL_ADMIN_INICIAL_*`, veja o README do backend). Para a apresentação sem
+login, use `NEXT_PUBLIC_MODO_APLICACAO=demonstracao` no `.env.local`.
+
+### Sessão
+
+- O token fica **só em memória**: recarregar a página ou fechar a aba pede login
+  de novo. Não há refresh token no backend.
+- A sessão expira pelo `expiresIn` devolvido no login (15 min por padrão). Um 401
+  em qualquer chamada autenticada encerra a sessão e leva ao login com aviso; o
+  caminho atual é guardado para voltar depois.
+- 403 **não** encerra a sessão: a tela diz que falta permissão.
+- Ao voltar para a aba, `/auth/me` é reconsultado: se um admin mudou o perfil da
+  conta, menus e acessos acompanham.
+- Sair (ou trocar de conta) descarta toda resposta pendente da sessão anterior.
 
 ### Demais comandos
 
 ```bash
 npm run lint        # ESLint (regras do Next + React)
 npm run typecheck   # TypeScript sem emitir arquivos
+npm run test        # Vitest + Testing Library (unidade e telas, API falsa)
+npm run test:e2e    # Playwright no navegador, contra o next dev e API simulada
 npm run build       # exportação estática em out/
 npm run start       # serve o out/ localmente em http://127.0.0.1:4173
 ```
+
+Na primeira vez, `npx playwright install chromium` baixa o navegador dos testes
+e2e. Mocks existem **só nos testes** (`tests/api-falsa.tsx` e
+`tests/e2e/api-simulada.ts`); o aplicativo continua consumindo apenas a API real.
+
+`npm run start` só serve arquivos estáticos: não faz proxy de `/api`. Para testar
+o `out/` com a API, use o Nginx do ambiente (mesma origem) ou configure
+`NEXT_PUBLIC_API_BASE_URL` absoluto e CORS no backend.
 
 ## Deploy
 
@@ -176,22 +212,39 @@ Turf.js para comprimento, rumo e projeção sobre a rota. O código está em
 | `/` | visão geral: métricas, estoque por tipo, demanda por prioridade, entregas em rota, tempo de atendimento |
 | `/estoque` | posição de estoque e bolsas na ordem de chegada, com filtros e rastreabilidade (US05) |
 | `/doacoes` | registra doação, mostra as bolsas geradas e o histórico de doações |
-| `/requisicoes` | cria requisição, mostra a fila e processa a alocação com os passos reais (US06) |
-| `/entregas` | planeja entregas para requisições alocadas e avança as etapas |
-| `/cadeia-fria` | métricas de telemetria, temperatura por veículo, alertas e frota |
-| `/unidades` | consulta e cadastro de hemocentros e hospitais sintéticos |
+| `/requisicoes` | requisição com vários itens, fila, alocação com os passos reais (US06), prioridade e cancelamento na fila |
+| `/entregas` | planeja entregas, calcula a rota no backend, ajusta o planejamento e avança as etapas |
+| `/cadeia-fria` | alertas, temperatura por veículo e período, frota editável e diagnóstico da ingestão (ADMIN) |
+| `/unidades` | consulta de hemocentros e hospitais; cadastro e remoção para ADMIN |
 | `/algoritmos` | visualizador da lista, da fila e da pilha, com o conteúdo real dos nós |
+| `/login` | entrada da versão de operação (fora do chrome, sem dados) |
+| `/usuarios` | contas da equipe, perfil e unidades vinculadas (só ADMIN) |
 
-O backend não disponibiliza login. Por isso a interface identifica o acesso como
-**demonstração sem autenticação** em vez de mostrar um formulário de login que
-daria uma falsa sensação de segurança.
+**Quem vê o quê.** O backend é quem autoriza: ADMIN tem acesso global; as demais
+contas só enxergam as unidades vinculadas a elas (e o que depende delas:
+estoque, requisições, entregas, veículos, alertas). A interface só esconde o que
+o backend de fato restringe a ADMIN — usuários, cadastro de unidades,
+diagnóstico da telemetria e cenário sintético. Esconder um botão nunca substitui
+o 403 do servidor.
 
-## O que esta interface ainda não mostra — e por quê
+## O que esta interface ainda não faz — e por quê
 
-Mapa, rota geográfica, ordenação por validade (FEFO) e matriz ABO/Rh **não
-existem aqui**, porque os algoritmos correspondentes são da Unidade 2 e ainda não
-foram implementados no backend. Desenhar essas telas agora com dado inventado
-contrariaria tanto a restrição acadêmica quanto a regra de não mockar.
+Cada item depende de regra ou contrato que o backend ainda não tem. A tela
+explica a limitação onde ela aparece, em vez de oferecer um botão que não
+cumpriria o que promete.
+
+| Ausente | Por quê | Depende de |
+|---|---|---|
+| Editar unidade | o `GET` não devolve logradouro, número, bairro e CEP; o `PUT` apagaria esses campos | B1 (backend) |
+| Cancelar requisição alocada/em rota e cancelar entrega | o backend não devolve as bolsas ao estoque nem libera entrega/veículo ao cancelar | B2 (backend) |
+| Data da coleta retroativa na doação | política de datas não decidida | D04 |
+| Validar capacidade do veículo e origem das bolsas na entrega | regra inexistente no backend | B2 |
+| Resolver alerta, resetar senha, excluir usuário, busca global de bolsas | não há endpoint | — |
+| FEFO, matriz ABO/Rh, rota por ruas no backend | Unidade 2 da disciplina | — |
+
+A distância da entrega é calculada pelo backend **em linha reta** (Haversine); o
+traçado por ruas aparece só na Central logística, vindo de um serviço externo e
+rotulado como tal.
 
 ## Equipe
 

@@ -1,6 +1,7 @@
 'use client'
 
-import { CheckCircle2, ClipboardCheck, RotateCw, Truck } from 'lucide-react'
+import { CheckCircle2, ChevronRight, ClipboardCheck, RotateCw, Route, Truck } from 'lucide-react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { BarraDeFiltros } from '@/components/data-table/barra-de-filtros'
@@ -9,35 +10,44 @@ import { TabelaDeDados, type Coluna } from '@/components/data-table/tabela-de-da
 import { usePaginacaoLocal } from '@/components/data-table/use-paginacao-local'
 import { AvisoAcademico } from '@/components/feedback/aviso-academico'
 import { CartaoDeMetrica } from '@/components/feedback/cartao-de-metrica'
-import { EstadoVazio } from '@/components/feedback/estados'
-import { Alerta } from '@/components/form/alerta'
+import { EstadoDeErro, EstadoVazio } from '@/components/feedback/estados'
 import { Cabecalho } from '@/components/layout/cabecalho'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
+import { Sheet } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
-import { api, mensagemDeErro } from '@/lib/api/cliente'
+import { mensagemDeErro } from '@/lib/api/cliente'
 import { useRecurso } from '@/lib/api/use-recurso'
-import type { Entrega, Pagina, Requisicao, StatusEntrega, Unidade, Veiculo } from '@/lib/api/tipos'
+import type { Entrega, StatusEntrega, Unidade, Veiculo } from '@/lib/api/tipos'
 import { rotulo, tomDaEntrega } from '@/lib/formatos'
+import { avancarEntrega, PROXIMA_ETAPA, STATUS_ATIVOS_DA_ENTREGA } from './entregas-api'
 import { FormularioDeEntrega } from './formulario-de-entrega'
+import { PainelDeEntrega } from './painel-de-entrega'
+import { interpretarRota } from './rota-planejada'
 
 const SITUACOES: StatusEntrega[] = ['PLANEJADA', 'DESPACHADA', 'EM_TRANSPORTE', 'ENTREGUE', 'CANCELADA']
 
-/** Proxima etapa de cada situacao: endpoint e rotulo do botao. */
-const PROXIMA_ETAPA: Partial<Record<StatusEntrega, { caminho: string; rotulo: string }>> = {
-  PLANEJADA: { caminho: 'despacho', rotulo: 'Despachar' },
-  DESPACHADA: { caminho: 'inicio-transporte', rotulo: 'Iniciar transporte' },
-  EM_TRANSPORTE: { caminho: 'conclusao', rotulo: 'Concluir' },
+function idDaQuery(valor: string | null): number | null {
+  const numero = Number(valor)
+  return valor && Number.isInteger(numero) && numero > 0 ? numero : null
 }
 
 export function PaginaDeEntregas() {
+  const router = useRouter()
+  const caminho = usePathname()
+  const parametros = useSearchParams()
+  // Links de outras telas: ?entrega=ID abre o detalhe; ?requisicao=ID abre o planejamento.
+  const entregaDaQuery = idDaQuery(parametros.get('entrega'))
+  const requisicaoDaQuery = idDaQuery(parametros.get('requisicao'))
+
   const [filtro, setFiltro] = useState<StatusEntrega | ''>('')
   const [avancando, setAvancando] = useState<number | null>(null)
+  const [selecionada, setSelecionada] = useState<number | null>(null)
+  const [planejando, setPlanejando] = useState(false)
 
   const todas = useRecurso<Entrega[]>('/entregas')
-  const requisicoes = useRecurso<Pagina<Requisicao>>('/requisicoes?status=ALOCADA&size=100')
   const veiculos = useRecurso<Veiculo[]>('/veiculos')
   const origens = useRecurso<Unidade[]>('/hemocentros')
 
@@ -45,10 +55,17 @@ export function PaginaDeEntregas() {
   const filtradas = filtro ? entregas.filter((entrega) => entrega.status === filtro) : entregas
   const paginacao = usePaginacaoLocal([...filtradas].sort((a, b) => b.id - a.id), 8)
   const contar = (...status: StatusEntrega[]) => entregas.filter((entrega) => status.includes(entrega.status)).length
+  const comEntregaAtiva = new Set(entregas.filter((entrega) => STATUS_ATIVOS_DA_ENTREGA.includes(entrega.status)).map((entrega) => entrega.requisicaoId))
+
+  const detalheAberto = selecionada ?? entregaDaQuery
+  const formularioAberto = planejando || requisicaoDaQuery !== null
+
+  function limparQuery() {
+    if (entregaDaQuery !== null || requisicaoDaQuery !== null) router.replace(caminho)
+  }
 
   function recarregarTudo() {
     todas.recarregar()
-    requisicoes.recarregar()
     veiculos.recarregar()
   }
 
@@ -57,8 +74,8 @@ export function PaginaDeEntregas() {
     if (!etapa) return
     setAvancando(entrega.id)
     try {
-      await api.enviar(`/entregas/${entrega.id}/${etapa.caminho}`)
-      toast.success(`Entrega da ${entrega.requisicaoCodigo} atualizada`, { description: `${etapa.rotulo}: concluído.` })
+      await avancarEntrega(entrega)
+      toast.success(`Entrega da ${entrega.requisicaoCodigo}: ${etapa.rotulo.toLowerCase()}`, { description: etapa.efeito })
     } catch (falha) {
       toast.error('Não foi possível atualizar a entrega', {
         description: mensagemDeErro(falha, 'Erro inesperado ao atualizar a entrega.'),
@@ -91,13 +108,20 @@ export function PaginaDeEntregas() {
     },
     {
       id: 'rota',
-      cabecalho: 'Rota planejada',
-      celula: (entrega) =>
-        entrega.rota ? (
-          <span className="line-clamp-1 max-w-56">{entrega.rota}</span>
-        ) : (
-          <span className="text-muted-foreground">Não informada</span>
-        ),
+      cabecalho: 'Rota',
+      celula: (entrega) => {
+        const rota = interpretarRota(entrega.rota)
+        if (rota) {
+          const destino = rota.paradas[rota.paradas.length - 1]
+          return (
+            <span className="line-clamp-1 max-w-56">
+              até {destino.nome}
+              {entrega.distanciaKm !== null && <span className="text-muted-foreground tabular-nums"> · {Math.round(entrega.distanciaKm * 10) / 10} km</span>}
+            </span>
+          )
+        }
+        return <span className="text-muted-foreground">{entrega.rota ? 'Formato não reconhecido' : 'Não calculada'}</span>
+      },
       className: 'hidden lg:table-cell',
       esqueleto: 'w-40',
     },
@@ -109,28 +133,35 @@ export function PaginaDeEntregas() {
     },
     {
       id: 'acao',
-      cabecalho: <span className="sr-only">Ação</span>,
+      cabecalho: <span className="sr-only">Ações</span>,
       celula: (entrega) => {
         const etapa = PROXIMA_ETAPA[entrega.status]
-        return etapa ? (
-          <Button
-            variant="outline"
-            size="sm"
-            carregando={avancando === entrega.id}
-            disabled={avancando !== null && avancando !== entrega.id}
-            onClick={() => avancar(entrega)}
-          >
-            {etapa.rotulo}
-          </Button>
-        ) : null
+        return (
+          <div className="flex items-center justify-end gap-1">
+            {etapa && (
+              <Button
+                variant="outline"
+                size="sm"
+                carregando={avancando === entrega.id}
+                disabled={avancando !== null && avancando !== entrega.id}
+                onClick={() => avancar(entrega)}
+              >
+                {etapa.rotulo}
+              </Button>
+            )}
+            <Button variant="ghost" size="icon-sm" onClick={() => setSelecionada(entrega.id)} aria-label={`Abrir entrega da ${entrega.requisicaoCodigo}`}>
+              <ChevronRight />
+            </Button>
+          </div>
+        )
       },
-      className: 'text-right',
-      esqueleto: 'ml-auto w-24',
+      className: 'w-48 text-right',
+      esqueleto: 'ml-auto w-28',
     },
   ]
 
-  const carregandoFormulario = requisicoes.carregando || veiculos.carregando || origens.carregando
-  const erroDoFormulario = requisicoes.erro ?? veiculos.erro ?? origens.erro
+  const carregandoFormulario = (veiculos.carregando && !veiculos.dados) || (origens.carregando && !origens.dados)
+  const erroDoFormulario = veiculos.erro ?? origens.erro
 
   return (
     <div className="space-y-8">
@@ -138,109 +169,135 @@ export function PaginaDeEntregas() {
         titulo="Entregas"
         descricao="Planejamento e acompanhamento das entregas, da saída do hemocentro até o hospital."
         acoes={
-          <Button variant="outline" size="sm" onClick={recarregarTudo}>
-            <RotateCw />
-            Atualizar
-          </Button>
+          <>
+            <Button variant="outline" size="sm" onClick={recarregarTudo}>
+              <RotateCw />
+              Atualizar
+            </Button>
+            <Button size="sm" onClick={() => setPlanejando(true)}>
+              <Route />
+              Planejar entrega
+            </Button>
+          </>
         }
       />
 
-      <AvisoAcademico complemento="A rota é um texto planejado; o backend ainda não fornece geometria para desenhar um mapa." />
+      <AvisoAcademico complemento="A distância calculada pelo backend é em linha reta, não pelas ruas." />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <CartaoDeMetrica rotulo="Planejadas" icone={ClipboardCheck} carregando={todas.carregando} valor={contar('PLANEJADA')} contexto="Aguardando despacho" />
-        <CartaoDeMetrica rotulo="Em rota" icone={Truck} carregando={todas.carregando} valor={contar('DESPACHADA', 'EM_TRANSPORTE')} contexto="Despachadas ou em transporte" />
-        <CartaoDeMetrica rotulo="Entregues" icone={CheckCircle2} carregando={todas.carregando} valor={contar('ENTREGUE')} contexto="Concluídas com sucesso" />
+        <CartaoDeMetrica rotulo="Planejadas" icone={ClipboardCheck} carregando={todas.carregando && !todas.dados} valor={contar('PLANEJADA')} contexto="Aguardando despacho" />
+        <CartaoDeMetrica rotulo="Em rota" icone={Truck} carregando={todas.carregando && !todas.dados} valor={contar('DESPACHADA', 'EM_TRANSPORTE')} contexto="Despachadas ou em transporte" />
+        <CartaoDeMetrica rotulo="Entregues" icone={CheckCircle2} carregando={todas.carregando && !todas.dados} valor={contar('ENTREGUE')} contexto="Concluídas" />
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
-        <Card>
-          <CardHeader>
-            <div>
-              <CardTitle>Planejar entrega</CardTitle>
-              <CardDescription>Para requisições com bolsas já alocadas.</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {carregandoFormulario ? (
-              <div className="space-y-5">
-                {[0, 1, 2].map((indice) => (
-                  <div key={indice} className="space-y-2">
-                    <Skeleton className="h-3.5 w-24" />
-                    <Skeleton className="h-9 w-full" />
-                  </div>
-                ))}
-              </div>
-            ) : erroDoFormulario ? (
-              <Alerta tipo="erro" titulo="Não foi possível carregar os dados do formulário">
-                {erroDoFormulario}
-              </Alerta>
-            ) : (
-              <FormularioDeEntrega
-                aptas={requisicoes.dados?.content ?? []}
-                veiculos={veiculos.dados ?? []}
-                origens={origens.dados ?? []}
-                aoPlanejar={recarregarTudo}
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-4">
+          <div>
+            <CardTitle>Acompanhamento</CardTitle>
+            <CardDescription>Avance cada entrega pela próxima etapa ou abra o detalhe para calcular a rota.</CardDescription>
+          </div>
+        </CardHeader>
+        <BarraDeFiltros className="border-t" ativos={filtro ? 1 : 0} aoLimpar={() => setFiltro('')}>
+          <Select
+            compacto
+            aria-label="Filtrar por situação"
+            value={filtro}
+            onChange={(evento) => {
+              setFiltro(evento.target.value as StatusEntrega | '')
+              paginacao.setPagina(0)
+            }}
+            className="sm:w-48"
+          >
+            <option value="">Todas as situações</option>
+            {SITUACOES.map((valor) => (
+              <option key={valor} value={valor}>
+                {rotulo(valor)}
+              </option>
+            ))}
+          </Select>
+        </BarraDeFiltros>
+        <TabelaDeDados
+          colunas={colunas}
+          linhas={paginacao.itensDaPagina}
+          chave={(entrega) => entrega.id}
+          carregando={todas.carregando}
+          erro={todas.erro}
+          aoTentarNovamente={todas.recarregar}
+          linhasDoEsqueleto={5}
+          vazio={
+            <EstadoVazio
+              icone={Truck}
+              titulo={filtro ? 'Nenhuma entrega nesta situação' : 'Nenhuma entrega planejada'}
+              descricao={filtro ? 'Escolha outra situação ou limpe o filtro.' : 'Quando uma requisição estiver alocada, planeje a entrega dela.'}
+              acao={
+                filtro ? undefined : (
+                  <Button size="sm" onClick={() => setPlanejando(true)}>
+                    <Route />
+                    Planejar entrega
+                  </Button>
+                )
+              }
+            />
+          }
+          rodape={
+            paginacao.totalPaginas > 1 && (
+              <Paginacao
+                pagina={paginacao.pagina}
+                totalPaginas={paginacao.totalPaginas}
+                totalItens={paginacao.totalItens}
+                tamanho={paginacao.tamanho}
+                aoMudar={paginacao.setPagina}
               />
-            )}
-          </CardContent>
-        </Card>
+            )
+          }
+        />
+      </Card>
 
-        <Card className="overflow-hidden">
-          <CardHeader className="pb-4">
-            <div>
-              <CardTitle>Acompanhamento</CardTitle>
-              <CardDescription>Avance cada entrega pela próxima etapa.</CardDescription>
-            </div>
-          </CardHeader>
-          <BarraDeFiltros className="border-t" ativos={filtro ? 1 : 0} aoLimpar={() => setFiltro('')}>
-            <Select
-              compacto
-              aria-label="Filtrar por situação"
-              value={filtro}
-              onChange={(evento) => {
-                setFiltro(evento.target.value as StatusEntrega | '')
-                paginacao.setPagina(0)
-              }}
-              className="sm:w-48"
-            >
-              <option value="">Todas as situações</option>
-              {SITUACOES.map((valor) => (
-                <option key={valor} value={valor}>
-                  {rotulo(valor)}
-                </option>
-              ))}
-            </Select>
-          </BarraDeFiltros>
-          <TabelaDeDados
-            colunas={colunas}
-            linhas={paginacao.itensDaPagina}
-            chave={(entrega) => entrega.id}
-            carregando={todas.carregando}
-            erro={todas.erro}
-            aoTentarNovamente={todas.recarregar}
-            linhasDoEsqueleto={5}
-            vazio={
-              <EstadoVazio
-                icone={Truck}
-                titulo={filtro ? 'Nenhuma entrega nesta situação' : 'Nenhuma entrega planejada'}
-                descricao={filtro ? 'Escolha outra situação ou limpe o filtro.' : 'Planeje a primeira no formulário ao lado.'}
-              />
-            }
-            rodape={
-              paginacao.totalPaginas > 1 && (
-                <Paginacao
-                  pagina={paginacao.pagina}
-                  totalPaginas={paginacao.totalPaginas}
-                  totalItens={paginacao.totalItens}
-                  tamanho={paginacao.tamanho}
-                  aoMudar={paginacao.setPagina}
-                />
-              )
-            }
+      <Sheet
+        aberto={formularioAberto}
+        aoMudar={(aberto) => {
+          if (!aberto) {
+            setPlanejando(false)
+            limparQuery()
+          }
+        }}
+        titulo="Planejar entrega"
+        descricao="Para requisições com bolsas já alocadas."
+        className="max-w-xl"
+      >
+        {carregandoFormulario ? (
+          <div className="space-y-5">
+            {[0, 1, 2].map((indice) => (
+              <Skeleton key={indice} className="h-14 w-full" />
+            ))}
+          </div>
+        ) : erroDoFormulario ? (
+          <EstadoDeErro mensagem={erroDoFormulario} aoTentarNovamente={() => [veiculos, origens].forEach((r) => r.recarregar())} />
+        ) : (
+          <FormularioDeEntrega
+            key={requisicaoDaQuery ?? 'nova'}
+            veiculos={veiculos.dados ?? []}
+            origens={origens.dados ?? []}
+            comEntregaAtiva={comEntregaAtiva}
+            requisicaoInicial={requisicaoDaQuery}
+            aoPlanejar={(entrega) => {
+              setPlanejando(false)
+              limparQuery()
+              recarregarTudo()
+              setSelecionada(entrega.id)
+            }}
           />
-        </Card>
-      </div>
+        )}
+      </Sheet>
+
+      <PainelDeEntrega
+        entregaId={formularioAberto ? null : detalheAberto}
+        aoFechar={() => {
+          setSelecionada(null)
+          limparQuery()
+        }}
+        aoMudar={recarregarTudo}
+      />
     </div>
   )
 }

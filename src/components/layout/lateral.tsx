@@ -2,13 +2,24 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSessao } from '@/features/autenticacao/provedor-de-sessao'
+import { podeGerenciarUsuarios } from '@/features/autenticacao/sessao'
 import { cn } from '@/lib/utils'
 import { Marca } from './marca'
-import { GRUPOS_DE_NAVEGACAO, normalizarCaminho } from './navegacao'
+import { GRUPOS_DE_NAVEGACAO, normalizarCaminho, type ItemDeNavegacao } from './navegacao'
 
 /** Conteudo da barra lateral; usado fixo no desktop e na gaveta do mobile. */
 export function ConteudoDaLateral({ aoNavegar }: { aoNavegar?: () => void }) {
   const atual = normalizarCaminho(usePathname())
+  const { usuario, demonstracao } = useSessao()
+
+  function visivel(item: ItemDeNavegacao) {
+    return item.restricao !== 'gerenciar-usuarios' || podeGerenciarUsuarios(usuario, demonstracao)
+  }
+
+  const grupos = GRUPOS_DE_NAVEGACAO.map((grupo) => ({ ...grupo, itens: grupo.itens.filter(visivel) })).filter(
+    (grupo) => grupo.itens.length > 0,
+  )
 
   return (
     <div className="flex h-full flex-col">
@@ -19,7 +30,7 @@ export function ConteudoDaLateral({ aoNavegar }: { aoNavegar?: () => void }) {
       </div>
 
       <nav aria-label="Navegação principal" className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
-        {GRUPOS_DE_NAVEGACAO.map((grupo) => (
+        {grupos.map((grupo) => (
           <div key={grupo.titulo}>
             <p className="mb-1.5 px-2.5 text-apoio font-medium tracking-wide text-sidebar-muted uppercase">
               {grupo.titulo}
@@ -58,10 +69,12 @@ export function ConteudoDaLateral({ aoNavegar }: { aoNavegar?: () => void }) {
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-sidebar-indicator opacity-40" />
             <span className="relative inline-flex size-2 rounded-full bg-sidebar-indicator" />
           </span>
-          <p className="text-apoio font-medium text-white">Ambiente acadêmico</p>
+          <p className="text-apoio font-medium text-white">
+            {demonstracao ? 'Demonstração acadêmica' : 'Ambiente acadêmico'}
+          </p>
         </div>
         <p className="mt-1 text-apoio leading-relaxed text-sidebar-muted">
-          Dados sintéticos · CESAR School 2026.2
+          {demonstracao ? 'Sem login · dados sintéticos' : 'Dados sintéticos · CESAR School 2026.2'}
         </p>
       </div>
     </div>

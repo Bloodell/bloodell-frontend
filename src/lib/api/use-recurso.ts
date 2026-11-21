@@ -1,19 +1,25 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { api, mensagemDeErro } from './cliente'
+import { api, mensagemDeErro, statusDaFalha } from './cliente'
+import { useEscopo } from './escopo'
 
 export interface EstadoDoRecurso<T> {
   dados: T | null
   carregando: boolean
   erro: string | null
+  /** Status HTTP da ultima falha (401, 403, 404...), ou null. */
+  statusHttp: number | null
   recarregar: () => void
 }
 
 interface Resposta<T> {
   chave: string
+  /** Caminho + escopo: os dados so valem para a mesma entidade e sessao. */
+  origem: string
   dados: T | null
   erro: string | null
+  statusHttp: number | null
 }
 
 /**
@@ -21,45 +27,51 @@ interface Resposta<T> {
  * precisa tratar: carregando, erro e dados (vazio e decidido por quem usa).
  * Caminho null = nao buscar ainda (ex.: nenhuma bolsa selecionada).
  *
- * Enquanto uma nova busca roda (filtro trocado, "Atualizar"), os dados
- * anteriores continuam na tela, para a tabela nao piscar vazia.
+ * "Atualizar" a mesma consulta mantem os dados na tela (a tabela nao pisca).
+ * Trocar de caminho, de sessao ou passar null descarta o que havia, para
+ * nunca exibir dado de outra entidade ou de outra pessoa.
  */
 export function useRecurso<T>(caminho: string | null): EstadoDoRecurso<T> {
+  const escopo = useEscopo()
   const [gatilho, setGatilho] = useState(0)
   const [resposta, setResposta] = useState<Resposta<T> | null>(null)
 
   const recarregar = useCallback(() => setGatilho((valor) => valor + 1), [])
 
-  // Cada busca tem uma chave; "carregando" e simplesmente "a ultima resposta
-  // ainda nao e desta chave".
-  const chave = caminho === null ? null : `${gatilho}:${caminho}`
+  const origem = caminho === null ? null : `${escopo}|${caminho}`
+  const chave = origem === null ? null : `${gatilho}|${origem}`
 
   useEffect(() => {
-    if (chave === null || caminho === null) return
+    if (chave === null || origem === null || caminho === null) return
 
-    let cancelado = false
+    const controle = new AbortController()
     api
-      .buscar<T>(caminho)
+      .buscar<T>(caminho, controle.signal)
       .then((dados) => {
-        if (!cancelado) setResposta({ chave, dados, erro: null })
+        if (!controle.signal.aborted) setResposta({ chave, origem, dados, erro: null, statusHttp: null })
       })
       .catch((falha: unknown) => {
-        if (!cancelado) {
-          const erro = mensagemDeErro(falha, 'Erro inesperado ao consultar a API.')
-          setResposta((anterior) => ({ chave, dados: anterior?.dados ?? null, erro }))
-        }
+        if (controle.signal.aborted) return
+        const erro = mensagemDeErro(falha, 'Erro inesperado ao consultar a API.')
+        setResposta((anterior) => ({
+          chave,
+          origem,
+          dados: anterior?.origem === origem ? anterior.dados : null,
+          erro,
+          statusHttp: statusDaFalha(falha),
+        }))
       })
 
-    return () => {
-      cancelado = true
-    }
-  }, [chave, caminho])
+    return () => controle.abort()
+  }, [chave, origem, caminho])
 
-  const atual = resposta?.chave === chave
+  const mesmaOrigem = resposta !== null && resposta.origem === origem
+  const atual = mesmaOrigem && resposta.chave === chave
   return {
-    dados: resposta?.dados ?? null,
+    dados: mesmaOrigem ? resposta.dados : null,
     carregando: chave !== null && !atual,
-    erro: atual ? (resposta?.erro ?? null) : null,
+    erro: atual ? resposta.erro : null,
+    statusHttp: atual ? resposta.statusHttp : null,
     recarregar,
   }
 }

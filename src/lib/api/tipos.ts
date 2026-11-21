@@ -2,6 +2,50 @@
 // nada e gerado por ferramenta (o projeto proibe geradores de boilerplate).
 // Quando o contrato muda, este arquivo muda no mesmo pull request.
 
+export type Perfil = 'OPERADOR_HEMOCENTRO' | 'USUARIO_HOSPITAL' | 'LOGISTICA' | 'ADMIN'
+
+/** GET /auth/me e itens de /usuarios. */
+export interface UsuarioAtual {
+  id: number
+  nome: string
+  email: string
+  perfil: Perfil
+}
+
+/** POST /auth/login. expiresIn em segundos. */
+export interface RespostaLogin {
+  accessToken: string
+  tokenType: string
+  expiresIn: number
+  usuario: UsuarioAtual
+}
+
+/** GET/PUT /usuarios/{id}/unidades. Conjunto vazio = sem acesso a unidades. */
+export interface VinculosDeUnidade {
+  unidadeIds: number[]
+}
+
+/** POST/PUT /hemocentros e /hospitais (UnidadeRequisicao). */
+export interface EntradaUnidade {
+  nome: string
+  logradouro: string | null
+  numero: string | null
+  bairro: string | null
+  cidade: string
+  uf: string
+  cep: string | null
+  latitude: number
+  longitude: number
+}
+
+export interface EntradaVeiculo {
+  placa: string
+  hemocentroBaseId: number
+  capacidadeBolsas: number
+  latitude: number
+  longitude: number
+}
+
 export interface Unidade {
   id: number
   tipo: 'HEMOCENTRO' | 'HOSPITAL'
@@ -253,13 +297,15 @@ export interface Entrega {
   concluidaEm: string | null
 }
 
+export type StatusVeiculo = 'DISPONIVEL' | 'EM_ROTA' | 'MANUTENCAO'
+
 export interface Veiculo {
   id: number
   placa: string
   hemocentroBaseId: number
   hemocentroBaseNome: string
   capacidadeBolsas: number
-  status: string
+  status: StatusVeiculo
   latitude: number
   longitude: number
 }
@@ -287,11 +333,18 @@ export interface LeituraDeTelemetria {
   dentroDaFaixaDidatica: boolean
 }
 
+/** GET /telemetrias/metricas (so ADMIN). Contadores desde o inicio do processo. */
 export interface MetricasDeTelemetria {
   leiturasRecebidas: number
   leiturasPersistidas: number
+  /** Recusadas porque a fila de ingestao estava cheia (nao por formato). */
   leiturasRecusadas: number
+  lotesGravados: number
+  tamanhoMedioDoLote: number
+  tempoTotalDeGravacaoMs: number
   tamanhoAtualDaFila: number
+  capacidadeDaFila: number
+  quantidadeDeWorkers: number
 }
 
 /** Envelope de erro da API (RFC 7807). Toda falha chega neste formato. */

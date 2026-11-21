@@ -2,9 +2,11 @@
 
 import { Plus, RotateCw, SlidersHorizontal } from 'lucide-react'
 import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { BarraDeFiltros, CampoDeBusca } from '@/components/data-table/barra-de-filtros'
 import { AvisoAcademico } from '@/components/feedback/aviso-academico'
+import { Alerta } from '@/components/form/alerta'
 import { Cabecalho } from '@/components/layout/cabecalho'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,7 +18,18 @@ import { PainelDeRastreabilidade } from './painel-de-rastreabilidade'
 import { TabelaDeBolsas } from './tabela-de-bolsas'
 import { TabelaDePosicao } from './tabela-de-posicao'
 
-const SITUACOES: EstadoBolsa[] = ['DISPONIVEL', 'RESERVADA', 'ALOCADA', 'EM_TRANSPORTE', 'ENTREGUE', 'VENCIDA', 'DESCARTADA']
+const SITUACOES: EstadoBolsa[] = [
+  'RECEBIDA',
+  'ARMAZENADA',
+  'DISPONIVEL',
+  'RESERVADA',
+  'ALOCADA',
+  'DESPACHADA',
+  'EM_TRANSPORTE',
+  'ENTREGUE',
+  'VENCIDA',
+  'DESCARTADA',
+]
 const TAMANHO_DA_PAGINA = 10
 
 /** US05 -- visualizar e controlar o estoque. Tudo vem da API, nada e mockado. */
@@ -28,7 +41,16 @@ export function PaginaDeEstoque() {
   const [pagina, setPagina] = useState(0)
   const [bolsaAberta, setBolsaAberta] = useState<Bolsa | null>(null)
 
-  const unidades = useRecurso<Unidade[]>('/hemocentros')
+  // ?bolsa=ID (ex.: vindo de um alerta da cadeia fria) abre a rastreabilidade.
+  const router = useRouter()
+  const caminho = usePathname()
+  const parametros = useSearchParams()
+  const idDaQuery = Number(parametros.get('bolsa'))
+  const bolsaDaQuery = useRecurso<Bolsa>(Number.isInteger(idDaQuery) && idDaQuery > 0 ? `/bolsas/${idDaQuery}` : null)
+  const bolsaNoPainel = bolsaAberta ?? bolsaDaQuery.dados
+
+  const hemocentros = useRecurso<Unidade[]>('/hemocentros')
+  const hospitais = useRecurso<Unidade[]>('/hospitais')
 
   // Hemocentro e componente valem para as duas tabelas.
   const filtrosComuns = new URLSearchParams()
@@ -98,6 +120,12 @@ export function PaginaDeEstoque() {
 
       <AvisoAcademico />
 
+      {bolsaDaQuery.erro && !bolsaAberta && (
+        <Alerta tipo="erro" titulo={`Não foi possível abrir a bolsa #${idDaQuery}`}>
+          {bolsaDaQuery.erro}
+        </Alerta>
+      )}
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <span className="flex items-center gap-2 text-rotulo font-medium text-muted-foreground sm:mr-1">
           <SlidersHorizontal className="size-4" aria-hidden="true" />
@@ -105,17 +133,30 @@ export function PaginaDeEstoque() {
         </span>
         <Select
           compacto
-          aria-label="Filtrar por hemocentro"
+          aria-label="Filtrar por unidade"
           value={unidadeId}
           onChange={(evento) => mudarUnidade(evento.target.value)}
-          className="sm:w-56"
+          className="sm:w-60"
         >
-          <option value="">Todos os hemocentros</option>
-          {(unidades.dados ?? []).map((unidade) => (
-            <option key={unidade.id} value={unidade.id}>
-              {unidade.nome}
-            </option>
-          ))}
+          <option value="">Todas as unidades</option>
+          {(hemocentros.dados ?? []).length > 0 && (
+            <optgroup label="Hemocentros">
+              {(hemocentros.dados ?? []).map((unidade) => (
+                <option key={unidade.id} value={unidade.id}>
+                  {unidade.nome}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          {(hospitais.dados ?? []).length > 0 && (
+            <optgroup label="Hospitais (bolsas recebidas)">
+              {(hospitais.dados ?? []).map((unidade) => (
+                <option key={unidade.id} value={unidade.id}>
+                  {unidade.nome}
+                </option>
+              ))}
+            </optgroup>
+          )}
         </Select>
         <Select
           compacto
@@ -200,7 +241,13 @@ export function PaginaDeEstoque() {
         />
       </Card>
 
-      <PainelDeRastreabilidade bolsa={bolsaAberta} aoFechar={() => setBolsaAberta(null)} />
+      <PainelDeRastreabilidade
+        bolsa={bolsaNoPainel}
+        aoFechar={() => {
+          setBolsaAberta(null)
+          if (parametros.get('bolsa')) router.replace(caminho)
+        }}
+      />
     </div>
   )
 }

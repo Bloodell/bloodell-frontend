@@ -11,8 +11,18 @@ export const classePainel = 'rounded-xl border bg-card/92 shadow-lg backdrop-blu
 
 const TEXTO_DA_FONTE: Record<FonteDaPosicao, string> = {
   simulacao: 'SIMULAÇÃO: posição fictícia, não é rastreamento real',
-  telemetria: 'Posição reportada pelo veículo (GPS)',
-  estimada: 'Posição estimada pelo horário de início (sem GPS)',
+  telemetria: 'Posição da última leitura de telemetria do veículo',
+  estimada: 'Posição estimada pelo horário de saída e pelo tempo previsto (sem leitura de GPS utilizável)',
+}
+
+/** "há 3 min", "há 2 h". Sem limite inventado de "dado velho": so a idade. */
+export function idadeDoDado(iso: string, agora = Date.now()): string {
+  const minutosPassados = Math.max(0, Math.round((agora - Date.parse(iso)) / 60_000))
+  if (minutosPassados < 1) return 'agora há pouco'
+  if (minutosPassados < 60) return `há ${minutosPassados} min`
+  const horas = Math.floor(minutosPassados / 60)
+  if (horas < 48) return `há ${horas} h`
+  return `há ${Math.floor(horas / 24)} dias`
 }
 
 export function minutos(valor: number | null): string {
@@ -253,7 +263,20 @@ export function DetalhesDaEntrega({
             <Satellite className="mt-px size-3.5 shrink-0" aria-hidden="true" />
           )}
           <span>
-            {TEXTO_DA_FONTE[fonte]}.{' '}
+            {TEXTO_DA_FONTE[fonte]}
+            {fonte === 'telemetria' && entrega.posicaoRegistradaEm && (
+              <>
+                {' '}
+                (registrada {idadeDoDado(entrega.posicaoRegistradaEm)})
+              </>
+            )}
+            .{' '}
+            {estado?.leituraForaDaRotaKm !== undefined && entrega.posicaoRegistradaEm && (
+              <>
+                A última leitura ({idadeDoDado(entrega.posicaoRegistradaEm)}) ficou a{' '}
+                {estado.leituraForaDaRotaKm.toFixed(1).replace('.', ',')} km da rota desenhada, por isso não foi usada.{' '}
+              </>
+            )}
             {entrega.fonteDaRota === 'estradas'
               ? 'Rota por ruas calculada por serviço de roteamento.'
               : 'Trajeto aproximado: o serviço de rotas não respondeu.'}

@@ -8,6 +8,7 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { AlternarTema } from './alternar-tema'
 import { ConteudoDaLateral } from './lateral'
+import { MenuDoUsuario } from './menu-do-usuario'
 import { TODAS_AS_PAGINAS, normalizarCaminho } from './navegacao'
 
 // O Swagger fica no mesmo host da interface (o Nginx encaminha para a API).
@@ -55,14 +56,8 @@ export function BarraSuperior() {
           API
         </a>
         <AlternarTema />
-        <div className="ml-2 hidden items-center gap-2.5 border-l pl-3 sm:flex">
-          <span className="flex size-7 items-center justify-center rounded-full bg-muted text-apoio font-semibold">
-            BD
-          </span>
-          <div className="leading-tight">
-            <p className="text-apoio font-medium">Demonstração</p>
-            <p className="text-apoio text-muted-foreground">Sem autenticação</p>
-          </div>
+        <div className="ml-1 border-l pl-2 sm:ml-2 sm:pl-3">
+          <MenuDoUsuario />
         </div>
       </div>
     </header>

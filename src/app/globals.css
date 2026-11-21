@@ -184,6 +184,19 @@
 
   --animate-entrar: entrar 220ms cubic-bezier(0.22, 1, 0.36, 1);
 
+  /* Rede isometrica do login: predio sobe, rota se traca, destino acende, emblema flutua. */
+  --animate-erguer: erguer 600ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  /*
+   * Ciclo da rede: 10 s, igual para rota, chegada e brilho. Como todos tem o
+   * mesmo periodo, o atraso de cada elemento mantem a ordem em toda volta: as
+   * rotas se tracam em sequencia, ficam acesas, escorrem e se tracam de novo.
+   */
+  --animate-tracar: tracar 10s linear infinite both;
+  --animate-chegada: chegada 10s linear infinite both;
+  --animate-brilho: brilho 10s linear infinite both;
+  --animate-esmaecer: fade-in 500ms ease both;
+  --animate-flutuar: flutuar 2600ms cubic-bezier(0.77, 0, 0.175, 1) infinite alternate;
+
   @keyframes entrar {
     from {
       opacity: 0;
@@ -212,6 +225,91 @@
 @keyframes sheet-in {
   from {
     transform: translateX(100%);
+  }
+}
+
+@keyframes erguer {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+/*
+ * Com pathLength=1 e dasharray "1 1": offset 1 = nada desenhado, 0 = rota
+ * inteira, -1 = apagada a partir da origem (a rota "escorre" para o destino).
+ * Em 10 s: traca em 0,7 s, fica acesa, escorre em 0,8 s e espera 2 s vazia.
+ */
+@keyframes tracar {
+  0% {
+    stroke-dashoffset: 1;
+    animation-timing-function: cubic-bezier(0.77, 0, 0.175, 1);
+  }
+  7%,
+  72% {
+    stroke-dashoffset: 0;
+    animation-timing-function: cubic-bezier(0.77, 0, 0.175, 1);
+  }
+  80%,
+  100% {
+    stroke-dashoffset: -1;
+  }
+}
+
+/*
+ * Pulso no destino nos primeiros 0,9 s de cada ciclo; invisivel no resto
+ * (inclusive durante o atraso inicial, por causa do fill "both").
+ */
+@keyframes chegada {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+    animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  1% {
+    opacity: 0.9;
+    animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  9%,
+  100% {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+
+/* Variante de movimento reduzido: o destino acende so por brilho, sem crescer. */
+@keyframes brilho {
+  0% {
+    opacity: 0;
+  }
+  3% {
+    opacity: 0.9;
+  }
+  9%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes flutuar {
+  to {
+    transform: translateY(-3px);
+  }
+}
+
+/* Entrega percorrendo a rota no painel do login (offset-path). */
+@keyframes percurso {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  8%,
+  88% {
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
   }
 }
 
@@ -252,8 +350,13 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /*
+   * Movimento reduzido = menos e mais suave, nao zero. Elementos marcados com
+   * data-movimento-essencial tem uma variante propria, sem deslocamento (so
+   * opacidade/traco), e ficam fora deste corte.
+   */
   @media (prefers-reduced-motion: reduce) {
-    *,
+    *:not([data-movimento-essencial]),
     *::before,
     *::after {
       animation-duration: 0.01ms !important;

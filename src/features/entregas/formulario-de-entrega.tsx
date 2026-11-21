@@ -9,41 +9,62 @@ import { useEnvio } from '@/components/form/use-envio'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
-import { api } from '@/lib/api/cliente'
+import { useRecurso } from '@/lib/api/use-recurso'
 import type { Entrega, Requisicao, Unidade, Veiculo } from '@/lib/api/tipos'
-import { rotulo } from '@/lib/formatos'
+import { plural } from '@/lib/formatos'
+import { criarEntrega, numeroOuNulo, validarPlanejamento } from './entregas-api'
+import { SeletorDeRequisicao } from './seletor-de-requisicao'
 
 interface Valores {
-  requisicaoId: string
+  requisicaoId: number | null
   veiculoId: string
   origemId: string
-  rota: string
+  tempoEstimadoMin: string
 }
 
-const INICIAL: Valores = { requisicaoId: '', veiculoId: '', origemId: '', rota: '' }
-
-function validar(valores: Valores): Partial<Record<keyof Valores, string>> {
-  const erros: Partial<Record<keyof Valores, string>> = {}
-  if (!valores.requisicaoId) erros.requisicaoId = 'Escolha uma requisição com bolsas alocadas.'
-  if (!valores.veiculoId) erros.veiculoId = 'Escolha o veículo.'
+function validar(valores: Valores) {
+  const erros: Partial<Record<'requisicaoId' | 'veiculoId' | 'origemId' | 'tempoEstimadoMin', string>> = {}
+  if (valores.requisicaoId === null) erros.requisicaoId = 'Escolha uma requisição com bolsas alocadas.'
+  if (!valores.veiculoId) erros.veiculoId = 'Escolha um veículo disponível.'
   if (!valores.origemId) erros.origemId = 'Escolha o hemocentro de origem.'
+  const tempo = validarPlanejamento({ distanciaKm: '', tempoEstimadoMin: valores.tempoEstimadoMin }).tempoEstimadoMin
+  if (tempo) erros.tempoEstimadoMin = tempo
   return erros
 }
 
+/**
+ * Planeja a entrega. A rota NAO e digitada: depois de criar, "Calcular rota"
+ * pede ao backend as paradas e a distancia. Por isso a criacao manda rota null.
+ */
 export function FormularioDeEntrega({
-  aptas,
   veiculos,
   origens,
+  comEntregaAtiva,
+  requisicaoInicial,
   aoPlanejar,
 }: {
-  aptas: Requisicao[]
   veiculos: Veiculo[]
   origens: Unidade[]
-  aoPlanejar: () => void
+  comEntregaAtiva: Set<number>
+  requisicaoInicial: number | null
+  aoPlanejar: (entrega: Entrega) => void
 }) {
-  const [valores, setValores] = useState<Valores>(INICIAL)
+  const [valores, setValores] = useState<Valores>({
+    requisicaoId: requisicaoInicial,
+    veiculoId: '',
+    origemId: origens.length === 1 ? String(origens[0].id) : '',
+    tempoEstimadoMin: '',
+  })
+  const [escolhida, setEscolhida] = useState<Requisicao | null>(null)
   const [tentouEnviar, setTentouEnviar] = useState(false)
   const envio = useEnvio()
+
+  // Veio de outra tela (?requisicao=ID): pode nao estar na primeira pagina.
+  const inicial = useRecurso<Requisicao>(requisicaoInicial !== null && escolhida === null ? `/requisicoes/${requisicaoInicial}` : null)
+  const resumo = escolhida ?? (inicial.dados?.id === valores.requisicaoId ? inicial.dados : null)
+
+  const disponiveis = veiculos.filter((veiculo) => veiculo.status === 'DISPONIVEL')
+  const indisponiveis = veiculos.length - disponiveis.length
 
   const erros = tentouEnviar ? { ...validar(valores), ...envio.errosDaApi } : envio.errosDaApi
 
@@ -54,64 +75,73 @@ export function FormularioDeEntrega({
   async function enviar(evento: FormEvent) {
     evento.preventDefault()
     setTentouEnviar(true)
-    if (Object.keys(validar(valores)).length > 0) return
+    if (Object.keys(validar(valores)).length > 0 || valores.requisicaoId === null) return
+    const requisicaoId = valores.requisicaoId
 
     const entrega = await envio.executar(
       () =>
-        api.enviar<Entrega>('/entregas', {
-          requisicaoId: Number(valores.requisicaoId),
+        criarEntrega({
+          requisicaoId,
           veiculoId: Number(valores.veiculoId),
           origemId: Number(valores.origemId),
-          rota: valores.rota.trim() || null,
+          rota: null,
+          distanciaKm: null,
+          tempoEstimadoMin: numeroOuNulo(valores.tempoEstimadoMin),
         }),
       'Não foi possível planejar a entrega.',
     )
 
     if (entrega) {
-      toast.success(`Entrega da ${entrega.requisicaoCodigo} planejada`, { description: `Veículo ${entrega.veiculoPlaca}.` })
-      aoPlanejar()
-      setValores(INICIAL)
-      setTentouEnviar(false)
+      toast.success(`Entrega da ${entrega.requisicaoCodigo} planejada`, {
+        description: `Veículo ${entrega.veiculoPlaca}. Agora calcule a rota no detalhe da entrega.`,
+      })
+      aoPlanejar(entrega)
     }
   }
 
-  if (aptas.length === 0) {
-    return (
-      <Alerta tipo="info" titulo="Nenhuma requisição pronta para entrega">
-        Crie e processe uma requisição em Requisições. Quando ela ficar alocada, aparece aqui.
-      </Alerta>
-    )
-  }
-
   return (
-    <form onSubmit={enviar} noValidate className="space-y-5">
+    <form onSubmit={enviar} noValidate className="space-y-6">
       <Campo id="requisicao" rotulo="Requisição alocada" erro={erros.requisicaoId}>
         {(props) => (
-          <Select {...props} value={valores.requisicaoId} onChange={(evento) => mudar('requisicaoId', evento.target.value)}>
-            <option value="">Selecione</option>
-            {aptas.map((requisicao) => (
-              <option key={requisicao.id} value={requisicao.id}>
-                {requisicao.codigo} · {requisicao.hospitalNome}
-              </option>
-            ))}
-          </Select>
+          <div className="space-y-2">
+            {resumo && !escolhida && (
+              <p className="rounded-md bg-secondary/60 px-3 py-2 text-apoio">
+                Selecionada: <span className="font-mono font-medium">{resumo.codigo}</span> · {resumo.hospitalNome}
+              </p>
+            )}
+            <SeletorDeRequisicao
+              valor={valores.requisicaoId}
+              aoMudar={(requisicao) => {
+                setEscolhida(requisicao)
+                mudar('requisicaoId', requisicao.id)
+              }}
+              comEntregaAtiva={comEntregaAtiva}
+              idDaMensagem={props['aria-describedby']}
+              invalido={Boolean(erros.requisicaoId)}
+            />
+          </div>
         )}
       </Campo>
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-        <Campo id="veiculo" rotulo="Veículo" erro={erros.veiculoId}>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Campo
+          id="veiculo"
+          rotulo="Veículo"
+          erro={erros.veiculoId}
+          ajuda={indisponiveis > 0 ? `${plural(indisponiveis, 'veículo')} em rota ou manutenção não aparece(m).` : undefined}
+        >
           {(props) => (
             <Select {...props} value={valores.veiculoId} onChange={(evento) => mudar('veiculoId', evento.target.value)}>
-              <option value="">Selecione</option>
-              {veiculos.map((veiculo) => (
+              <option value="">{disponiveis.length === 0 ? 'Nenhum disponível' : 'Selecione'}</option>
+              {disponiveis.map((veiculo) => (
                 <option key={veiculo.id} value={veiculo.id}>
-                  {veiculo.placa} · {rotulo(veiculo.status)}
+                  {veiculo.placa} · {veiculo.capacidadeBolsas} bolsas · {veiculo.hemocentroBaseNome}
                 </option>
               ))}
             </Select>
           )}
         </Campo>
-        <Campo id="origem" rotulo="Origem" erro={erros.origemId}>
+        <Campo id="origem" rotulo="Hemocentro de origem" erro={erros.origemId}>
           {(props) => (
             <Select {...props} value={valores.origemId} onChange={(evento) => mudar('origemId', evento.target.value)}>
               <option value="">Selecione</option>
@@ -125,20 +155,35 @@ export function FormularioDeEntrega({
         </Campo>
       </div>
 
-      <Campo id="rota" rotulo="Descrição da rota" opcional erro={erros.rota}>
+      <Campo
+        id="tempo-estimado"
+        rotulo="Tempo estimado (min)"
+        opcional
+        erro={erros.tempoEstimadoMin}
+        ajuda="Pode preencher depois. A distância vem do cálculo de rota."
+      >
         {(props) => (
           <Input
             {...props}
-            value={valores.rota}
-            placeholder="Hemocentro Recife → Hospital Central"
-            onChange={(evento) => mudar('rota', evento.target.value)}
+            type="number"
+            min={1}
+            step={1}
+            inputMode="numeric"
+            value={valores.tempoEstimadoMin}
+            onChange={(evento) => mudar('tempoEstimadoMin', evento.target.value)}
+            className="w-40 tabular-nums"
           />
         )}
       </Campo>
 
+      <p className="text-apoio text-muted-foreground">
+        O backend confere a regra no envio: requisição alocada e sem outra entrega ativa, veículo disponível e origem
+        hemocentro. Capacidade do veículo e origem das bolsas ainda não são validadas por ele.
+      </p>
+
       {envio.erro && <Alerta tipo="erro" titulo="A API recusou o planejamento">{envio.erro}</Alerta>}
 
-      <Button type="submit" className="w-full" carregando={envio.enviando}>
+      <Button type="submit" size="lg" className="w-full" carregando={envio.enviando}>
         {!envio.enviando && <Route />}
         {envio.enviando ? 'Planejando…' : 'Planejar entrega'}
       </Button>

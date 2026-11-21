@@ -2,6 +2,7 @@
 
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { LeituraDeTelemetria } from '@/lib/api/tipos'
+import { LEITURAS_NO_GRAFICO, ultimasEmOrdem } from './telemetria-api'
 
 interface Ponto {
   horario: string
@@ -21,10 +22,15 @@ function Dica({ active, payload }: { active?: boolean; payload?: { payload: Pont
   )
 }
 
-/** Ultimas 30 leituras de temperatura de um veiculo. */
+/** As 30 leituras mais recentes recebidas, em ordem cronologica. */
 export function GraficoDeTemperatura({ leituras }: { leituras: LeituraDeTelemetria[] }) {
-  const pontos: Ponto[] = leituras.slice(-30).map((leitura) => ({
-    horario: new Date(leitura.registradaEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+  const pontos: Ponto[] = ultimasEmOrdem(leituras, LEITURAS_NO_GRAFICO).map((leitura) => ({
+    horario: new Date(leitura.registradaEm).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
     temperatura: Number(leitura.temperaturaC),
     dentroDaFaixa: leitura.dentroDaFaixaDidatica,
   }))

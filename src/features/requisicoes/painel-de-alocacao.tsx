@@ -53,7 +53,11 @@ export function PainelDeAlocacao({
           {!completa && (
             <div className="flex gap-2.5 rounded-lg border border-atencao/30 bg-atencao-suave px-3.5 py-3 text-rotulo">
               <AlertTriangle className="mt-0.5 size-4 shrink-0 text-atencao" aria-hidden="true" />
-              <p>Estoque insuficiente para atender toda a quantidade solicitada.</p>
+              <p>
+                <span className="font-medium">Atendimento parcial.</span> Faltam{' '}
+                {resultado.quantidadeSolicitada - resultado.quantidadeAlocada} bolsa(s): o estoque compatível não bastou. A
+                API não realoca o saldo sozinha.
+              </p>
             </div>
           )}
 
